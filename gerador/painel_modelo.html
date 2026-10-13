@@ -173,7 +173,8 @@ function iniciar(DADOS){
     const df = (DADOS.frota - n) / DADOS.frota * 100;
     const media = Math.round(rows.reduce((s, r) => s + r.a[6], 0) / n);
     const dcls = (d) => d >= 30 ? 'd30' : d >= 15 ? 'd15' : d >= 8 ? 'd8' : '';
-    const cols = '230px 110px 120px 110px minmax(0,1fr) 270px';
+    const temProg = P.linhas.some((a) => a[10]);
+    const cols = temProg ? '200px 90px 110px 100px 330px minmax(0,1fr) 250px' : '230px 110px 120px 110px minmax(0,1fr) 270px';
     const rowH = Math.max(40, Math.min(58, Math.floor(600 / Math.max(n, 1))));
     const labC = { red: '#ff8a8a', green: '#6fe3a2', gray: '#c9d6ea', amber: '#ffcf6b' };
     $('s0').innerHTML =
@@ -189,12 +190,13 @@ function iniciar(DADOS){
       '<div class="infos"><div class="h cond">INFORMAÇÕES IMPORTANTES</div>' +
         P.infos.map((i) => '<div class="i"><b style="color:' + (labC[i[1]] || '#c9d6ea') + '">' + esc(i[0]) + '</b><span class="clamp">' + esc(i[2]) + '</span></div>').join('') +
       '</div>' +
-      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>O.S.</div><div>Entrada</div><div style="text-align:center">Dias parado</div><div style="padding-left:16px">Última observação</div><div style="padding-left:16px">Previsão de saída</div></div>' +
+      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>O.S.</div><div>Entrada</div><div style="text-align:center">Dias parado</div>' + (temProg ? '<div style="padding-left:16px">Prognóstico</div>' : '') + '<div style="padding-left:16px">Última observação</div><div style="padding-left:16px">Previsão de saída</div></div>' +
         rows.map((r) => { const a = r.a; return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
           '<div style="padding-left:14px;display:flex;flex-direction:column;line-height:1.05;min-width:0"><span class="pf cond" style="font-size:28px">' + esc(a[0]) + '</span><span style="font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a[1]) + '</span></div>' +
           '<div style="font-size:16px;color:var(--tx2)">' + esc(a[2]) + '</div>' +
           '<div style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:16px;color:#dfe7f3">' + esc(a[3]) + '</span><span style="font-size:13px;color:var(--tx3)">' + esc(a[4]) + '</span></div>' +
           '<div style="display:flex;justify-content:center"><span class="dbox cond ' + dcls(a[6]) + '">' + a[6] + '</span></div>' +
+          (temProg ? '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:#eef3fa;font-weight:500">' + esc(a[10] || '—') + '</div>' : '') +
           '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:#dfe7f3"><b style="color:#8fb2ff;font-weight:600">' + esc(a[7]) + '</b> ' + esc(a[8]) + '</div>' +
           '<div style="padding-left:16px;display:flex;align-items:center;gap:12px"><span class="cond" style="font-size:22px;font-weight:600;width:50px;color:#c9d6ea">' + esc(a[5] || '—') + '</span><span class="pill p-' + r.k + '">' + r.sit + '</span></div>' +
         '</div>'; }).join('') +

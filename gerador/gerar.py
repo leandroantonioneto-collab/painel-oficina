@@ -95,7 +95,7 @@ def main():
             'fonte': '%s (sistema) · planilha: %s · frota base: %d equipamentos próprios' % (
                 os.path.basename(a.maqpar), os.path.basename(a.preventiva), int(cfg['frota'])),
             'linhas': [[x['pf'], x['modelo'], x['os'], x['entrada'], x['hora'], x['previsao'], x['dias'],
-                        x['obsData'], x['obs'], x['peca']] for x in mq['linhas']],
+                        x['obsData'], x['obs'], x['peca'], x.get('prognostico', '')] for x in mq['linhas']],
             'infos': infos_paradas(mq['linhas'], ref),
         },
         'preventivaMes': prev,
