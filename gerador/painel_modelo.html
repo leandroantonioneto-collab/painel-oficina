@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão Visual · Oficina</title>
+<style>/*FONTS*/</style>
+<style>
+:root{--bg:#0c1a31;--card:#13264a;--card2:#1a3160;--line:#213a66;--line2:#2a4579;--tx:#eef3fa;--tx2:#a9bbd8;--tx3:#7f95b8;--blue:#1f4fb4;--today:#3b6fe6;--green:#3fc57e;--green2:#6fe3a2;--greenbg:#1f7a47;--amber:#e0a52e;--amber2:#ffcf6b;--red:#d93a3a;--red2:#ff8a8a;--redbg:#3a1620}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--tx)}
+.cond{font-family:'Barlow Condensed','Arial Narrow',sans-serif}
+#stage{width:1920px;height:1080px;position:absolute;left:0;top:0;transform-origin:0 0;background:var(--bg);padding:26px 36px 20px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.top{display:flex;align-items:center;justify-content:space-between;height:64px;background:var(--blue);border-radius:14px;padding:0 26px;flex:none}
+.top h1{margin:0;font-weight:700;font-size:40px;letter-spacing:.5px}
+.chip{background:var(--bg);border-radius:999px;padding:6px 18px;font-size:28px;font-weight:700;letter-spacing:.5px}
+.screen{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+.kpis{display:grid;gap:14px;height:96px;flex:none}
+.k{background:var(--card);border-radius:14px;padding:10px 16px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.k .l{font-size:17px;color:var(--tx2)}
+.k .v{font-size:50px;font-weight:700;line-height:1}
+.k.red{background:var(--redbg);border:2px solid #ff6b6b}.k.red .l{color:#ffb3b3}
+.k.blue{background:#142c5c;border:2px solid #5d8cff}.k.blue .l{color:#b9cdfa}
+.k.dash{border:2px dashed var(--tx3)}
+.big{display:flex;flex-direction:row;align-items:center;gap:18px;padding:12px 20px}
+.big .v{font-size:64px;color:var(--green2)}
+.bar{height:8px;background:#24406f;border-radius:4px;overflow:hidden}.bar>div{height:100%;background:var(--green)}
+.infos{display:grid;grid-template-columns:200px repeat(4,minmax(0,1fr));gap:12px;height:68px;flex:none}
+.infos .h{background:var(--amber);color:#1d1405;border-radius:12px;display:flex;align-items:center;padding:0 18px;font-size:25px;font-weight:700;line-height:1.05}
+.infos .i{background:var(--card);border-radius:12px;padding:8px 16px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0}
+.infos .i b{font-size:12px;letter-spacing:.06em}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.infos .i span{font-size:15px;line-height:1.25;color:#dfe7f3}
+.tbl{flex:1;background:var(--card);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.row{display:grid;align-items:center;border-top:1px solid var(--line)}
+.hd{height:44px;background:var(--card2);font-size:13px;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;border:0;flex:none}
+.foot{margin-top:auto;padding:6px 14px;font-size:14px;color:#8fa8cc;border-top:1px solid var(--line)}
+.pf{font-weight:700;font-size:26px;white-space:nowrap}
+.top h1,.chip,.k .l,#upd,#today{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k{overflow:hidden}
+.pill{border-radius:999px;padding:3px 12px;font-size:15px;font-weight:700;white-space:nowrap}
+.p-venc{background:var(--red);color:#fff}.p-hoje{background:var(--amber);color:#1d1405}.p-sem{border:2px dashed var(--tx3);color:#c9d6ea;padding:1px 12px}.p-ok{background:rgba(63,197,126,.18);color:var(--green2)}.p-lim{background:var(--amber);color:#1d1405}.p-done{color:var(--tx3);font-weight:500}.p-nd{border:1px dashed var(--tx3);color:var(--tx3);font-weight:500}
+.dbox{min-width:64px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:700}
+.d30{background:var(--red);color:#fff}.d15{background:var(--amber);color:#1d1405}.d8{border:2px solid var(--amber);color:var(--amber2)}
+.cell{width:34px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+.c-ok{background:var(--greenbg);color:#e6fff0}.c-late{background:var(--red);color:#fff;font-size:18px}.c-today{width:48px;background:var(--today);color:#fff;font-size:12px}.c-plan{border:2px solid var(--tx3);color:#c9d6ea}
+.dcol{display:flex;align-items:center;justify-content:center;height:100%;border-left:1px solid var(--line)}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;align-content:center;font-size:15px;color:#c9d6ea}
+.legend span{display:flex;align-items:center;gap:8px}.legend .cell{width:26px;height:22px;font-size:12px}
+.bottom{display:flex;align-items:center;gap:22px;height:54px;flex:none}
+.btn{height:48px;border-radius:10px;border:1px solid var(--line2);background:var(--card);color:var(--tx);font:600 18px 'IBM Plex Sans',sans-serif;cursor:pointer;padding:0 20px}
+.btn.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+select.btn{padding:0 12px}
+.prog{flex:1;display:flex;align-items:center;gap:14px}
+.prog .bar>div{background:#5d8cff;transition:width 1s linear}
+.muted{color:var(--tx2)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="top">
+    <div style="display:flex;align-items:center;gap:22px"><h1 class="cond">GESTÃO VISUAL · OFICINA</h1><span class="chip cond" id="chip"></span></div>
+    <div style="display:flex;align-items:center;gap:26px;font-size:20px"><span style="color:#c9dafc" id="upd"></span><span class="cond" style="font-size:34px;font-weight:600" id="today"></span></div>
+  </div>
+  <div class="screen" id="s0"></div>
+  <div class="screen" id="s1" style="display:none"></div>
+  <div class="screen" id="s2" style="display:none"></div>
+  <div class="bottom">
+    <div style="display:flex;gap:10px"><button class="btn" id="t0" type="button">1 · Máquinas paradas</button><button class="btn" id="t1" type="button">2 · Preventiva da semana</button><button class="btn" id="t2" type="button">3 · Preventiva - Próxima semana</button></div>
+    <div class="prog"><div class="bar" style="flex:1"><div id="pbar" style="width:0"></div></div><span class="muted" style="font-size:17px;width:190px;white-space:nowrap" id="rest"></span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn" id="pause" type="button" style="min-width:130px">Pausar</button>
+      <label for="secs" class="muted" style="font-size:18px;margin-left:10px">Trocar a cada</label>
+      <select class="btn" id="secs"><option value="15">15 s</option><option value="30">30 s</option><option value="45">45 s</option><option value="60">1 min</option><option value="120">2 min</option><option value="300">5 min</option></select>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DADOS (atualizados automaticamente todo dia) ===== -->
+<div id="lock" style="position:fixed;inset:0;background:#0c1a31;display:flex;align-items:center;justify-content:center;z-index:9;font-family:'IBM Plex Sans',sans-serif">
+  <form id="lockForm" style="background:#13264a;border-radius:18px;padding:40px 44px;width:min(560px,92vw);display:flex;flex-direction:column;gap:18px;color:#eef3fa">
+    <div class="cond" style="font-size:40px;font-weight:700;letter-spacing:.5px">GESTÃO VISUAL · OFICINA</div>
+    <label for="pw" style="font-size:20px;color:#a9bbd8">Digite a senha do painel</label>
+    <input id="pw" type="password" autocomplete="current-password" style="height:60px;border-radius:12px;border:2px solid #2a4579;background:#0c1a31;color:#eef3fa;font-size:26px;padding:0 18px">
+    <label style="display:flex;align-items:center;gap:12px;font-size:18px;color:#c9d6ea"><input id="rem" type="checkbox" checked style="width:24px;height:24px"> Lembrar nesta TV</label>
+    <button type="submit" style="height:60px;border-radius:12px;border:0;background:#3b6fe6;color:#fff;font:700 22px 'IBM Plex Sans',sans-serif;cursor:pointer">Abrir painel</button>
+    <div id="lockMsg" role="alert" style="min-height:24px;font-size:18px;color:#ff8a8a"></div>
+  </form>
+</div>
+<script>const DADOS_ENC = /*DADOS_ENC*/null;</script>
+
+<script>
+function iniciar(DADOS){
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmt = (n) => Number(n).toLocaleString('pt-BR');
+  const parseDM = (s, y) => { const p = s.split('/'); return new Date(y || Number(p[2]) || 2026, Number(p[1]) - 1, Number(p[0])); };
+  const WD = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // ajuste à tela da TV
+  function fit(){ const s = Math.min(innerWidth / 1920, innerHeight / 1080); const st = $('stage'); st.style.transform = 'scale(' + s + ')'; st.style.left = ((innerWidth - 1920 * s) / 2) + 'px'; st.style.top = ((innerHeight - 1080 * s) / 2) + 'px'; }
+  addEventListener('resize', fit); fit();
+
+  // relógio
+  function clock(){ const d = new Date(); $('today').textContent = WD[d.getDay()] + ' · ' + d.toLocaleDateString('pt-BR') + ' · ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+  clock(); setInterval(clock, 20000);
+  $('upd').textContent = 'Atualizado ' + DADOS.atualizado;
+
+
+  // ===== MONTA SEMANA ATUAL E PRÓXIMA A PARTIR DA PROGRAMAÇÃO DO MÊS =====
+  (function montarPreventiva(){
+    const M = DADOS.preventivaMes, hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const dt = (s) => { const p = s.split('/'); return new Date(hoje.getFullYear(), Number(p[1]) - 1, Number(p[0])); };
+    const ini = (w) => dt(w.dias[0][1]), fim = (w) => dt(w.dias[w.dias.length - 1][1]);
+    let iAt = M.semanas.findIndex((w) => hoje >= ini(w) && hoje <= fim(w));
+    if (iAt < 0) iAt = hoje < ini(M.semanas[0]) ? 0 : M.semanas.length - 1;
+    const atual = M.semanas[iAt], prox = M.semanas[Math.min(iAt + 1, M.semanas.length - 1)];
+    const num = (h) => Number(String(h).replace(/\./g, '').replace(',', '.')) || 0;
+    const valida = (it) => !/TRANSFERIDO/i.test(it[8]);
+    const unicos = (lista) => { const vis = {}; return lista.filter((it) => { if (vis[it[0]]) return false; vis[it[0]] = 1; return true; }); };
+    const leve = (mod) => /OROCH|KWID|SAVEIRO|BUS |DAILY|STRADA|HILUX|S10|AMAROK|RENEGADE/i.test(mod);
+    DADOS.preventiva = {
+      titulo: atual.titulo, dias: atual.dias, terceiros: M.terceiros,
+      nota: 'Tolerância de 10% do intervalo · intervalo: 250 h (máquinas e caminhões) e 10.000 km (veículos leves e ônibus) · último abastecimento: aguardando relatório de abastecimento',
+      linhas: unicos(atual.itens.filter(valida)).map((it) => [it[0], it[1], num(it[2]), it[3], it[4] || '—', it[5], it[6], it[7] || '—', leve(it[1]) ? 10000 : 250, null])
+    };
+    // próxima semana
+    const paradas = {}; DADOS.paradas.linhas.forEach((l) => { paradas[l[0]] = l; });
+    const brand = (it) => { const t = (it[8] + ' ' + it[1]).toUpperCase(); const m = t.match(/GARANTI[AV]A?\s+(?:CHASSI\s+)?(VOLVO|CAT|IVECO|HAMM|RENAULT|JEEP|MB|MERCEDES)/); if (m) return m[1]; if (/GARANTIA/.test(t)) return /924|320|336|140|D6|CP 5/.test(t) ? 'CAT' : ''; return null; };
+    const lista = unicos(prox.itens.filter(valida));
+    const itens = lista.map((it) => {
+      const fl = [], obs = it[8].toUpperCase();
+      if (paradas[it[0]]) fl.push('parada');
+      if (it[7] === 'Parcial') fl.push('parcial');
+      const b = brand(it); if (b !== null) fl.push('gar:' + b);
+      const fe = obs.match(/(?:EXECUTADO|REALIZADO) EM (\d\d\/\d\d)/); if (it[6]) fl.push('feita:' + (fe ? fe[1] : 'OK'));
+      if (/EM ABERTO/.test(obs)) fl.push('aberta');
+      if (/IMPLEMENTO/.test(obs) && !b) fl.push('impl');
+      return [it[5], it[0], it[1], it[3], it[4], it[7], fl];
+    });
+    const dname = (i) => prox.dias[i][0].charAt(0) + prox.dias[i][0].slice(1).toLowerCase() + ' ' + prox.dias[i][1];
+    const pend = itens.filter((x) => !x[6].some((f) => f.indexOf('feita:') === 0));
+    const aprov = pend.filter((x) => paradas[x[1]]).map((x) => { const p = paradas[x[1]]; return [x[1], dname(x[0]) + ' · parada há ' + p[6] + ' dias' + (x[6].find((f) => f.indexOf('gar:') === 0) ? ' · garantia ' + x[6].find((f) => f.indexOf('gar:') === 0).slice(4).toLowerCase() : '')]; });
+    const falta = {}; lista.forEach((it) => { falta[it[0]] = it[9] || ''; });
+    const pecas = pend.filter((x) => x[5] === 'Parcial').map((x) => [x[1], dname(x[0]) + ' · seq ' + x[3] + (falta[x[1]] ? ' · falta ' + falta[x[1]].toLowerCase() : '')]);
+    const revisar = [];
+    prox.itens.filter((it) => !valida(it)).forEach((it) => revisar.push([it[0], 'Transferido · fora da conta']));
+    lista.filter((it) => !it[4]).forEach((it) => revisar.push([it[0], 'Sem OS aberta']));
+    lista.filter((it) => !it[7] && !it[6]).forEach((it) => revisar.push([it[0], 'Caixa não informada']));
+    lista.filter((it) => /EM ABERTO/i.test(it[8])).forEach((it) => revisar.push([it[0], 'OS anterior ainda em aberto']));
+    const dup = {}; prox.itens.forEach((it) => { dup[it[0]] = (dup[it[0]] || 0) + 1; }); Object.keys(dup).filter((k) => dup[k] > 1).forEach((k) => revisar.push([k, 'Duplicada na semana']));
+    prox.dias.forEach((d, i) => { const n = itens.filter((x) => x[0] === i).length; if (n >= 7) revisar.push([dname(i), n + ' preventivas no mesmo dia · avaliar distribuir']); });
+    const mes = M.semanas.map((w, i) => {
+      const its = unicos(w.itens.filter(valida)), feitos = its.filter((it) => it[6]).length, pct = its.length ? Math.round(feitos / its.length * 100) : 0;
+      if (i < iAt) return ['S' + w.n, pct + '%', feitos + ' de ' + its.length + ' · encerrada', pct, pct >= 80 ? '#6fe3a2' : '#ffcf6b'];
+      if (i === iAt) return ['S' + w.n, feitos + '/' + its.length, 'semana atual', pct, '#8fb2ff'];
+      return ['S' + w.n, String(its.length), 'programadas · ' + its.filter((it) => it[7] === 'Parcial').length + ' parciais', 0, '#c9d6ea'];
+    });
+    DADOS.proxima = { titulo: prox === atual ? prox.titulo + ' (fim da programação)' : prox.titulo, dias: prox.dias, itens, mes, aprov, pecas, revisar: revisar.slice(0, 5) };
+  })();
+
+  // ===== MÁQUINAS PARADAS =====
+  function renderParadas(){
+    const P = DADOS.paradas, ref = parseDM(P.dataRelatorio);
+    const rows = P.linhas.map((a) => {
+      let k = 'sem', sit = 'Sem previsão';
+      if (a[5]) { const diff = Math.round((parseDM(a[5], ref.getFullYear()) - ref) / 864e5);
+        if (diff < 0) { k = 'venc'; sit = 'Vencida há ' + (-diff) + ' d'; } else if (diff === 0) { k = 'hoje'; sit = 'Vence hoje'; } else { k = 'ok'; sit = 'Faltam ' + diff + ' d'; } }
+      return { a, k, sit };
+    });
+    const n = rows.length, cnt = (k) => rows.filter((r) => r.k === k).length;
+    const df = (DADOS.frota - n) / DADOS.frota * 100;
+    const media = Math.round(rows.reduce((s, r) => s + r.a[6], 0) / n);
+    const dcls = (d) => d >= 30 ? 'd30' : d >= 15 ? 'd15' : d >= 8 ? 'd8' : '';
+    const cols = '230px 110px 120px 110px minmax(0,1fr) 270px';
+    const rowH = Math.max(40, Math.min(58, Math.floor(600 / Math.max(n, 1))));
+    const labC = { red: '#ff8a8a', green: '#6fe3a2', gray: '#c9d6ea', amber: '#ffcf6b' };
+    $('s0').innerHTML =
+      '<div class="kpis" style="grid-template-columns:1.6fr repeat(6,minmax(0,1fr))">' +
+        '<div class="k big"><span class="v cond">' + df.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%</span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="l" style="font-size:17px;color:var(--tx2)">Disponibilidade física</span><span style="font-size:16px">' + n + ' parados de <b>' + DADOS.frota + '</b> equipamentos</span><div class="bar"><div style="width:' + df + '%"></div></div></div></div>' +
+        '<div class="k"><span class="l">Máquinas paradas</span><span class="v cond">' + n + '</span></div>' +
+        '<div class="k red"><span class="l">Previsão vencida</span><span class="v cond" style="color:var(--red2)">' + cnt('venc') + '<span style="font-size:22px;color:var(--amber2)"> · ' + cnt('hoje') + ' vence hoje</span></span></div>' +
+        '<div class="k dash"><span class="l" style="color:#c9d6ea">Sem previsão de saída</span><span class="v cond">' + cnt('sem') + '</span></div>' +
+        '<div class="k"><span class="l">Aguardando peça</span><span class="v cond" style="color:var(--amber2)">' + rows.filter((r) => r.a[9]).length + '</span></div>' +
+        '<div class="k"><span class="l">Paradas há +30 dias</span><span class="v cond" style="color:var(--red2)">' + rows.filter((r) => r.a[6] >= 30).length + '</span></div>' +
+        '<div class="k"><span class="l">Tempo médio parado</span><span class="v cond">' + media + '<span style="font-size:24px;color:var(--tx2)"> dias</span></span></div>' +
+      '</div>' +
+      '<div class="infos"><div class="h cond">INFORMAÇÕES IMPORTANTES</div>' +
+        P.infos.map((i) => '<div class="i"><b style="color:' + (labC[i[1]] || '#c9d6ea') + '">' + esc(i[0]) + '</b><span class="clamp">' + esc(i[2]) + '</span></div>').join('') +
+      '</div>' +
+      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>O.S.</div><div>Entrada</div><div style="text-align:center">Dias parado</div><div style="padding-left:16px">Última observação</div><div style="padding-left:16px">Previsão de saída</div></div>' +
+        rows.map((r) => { const a = r.a; return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
+          '<div style="padding-left:14px;display:flex;flex-direction:column;line-height:1.05;min-width:0"><span class="pf cond" style="font-size:28px">' + esc(a[0]) + '</span><span style="font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a[1]) + '</span></div>' +
+          '<div style="font-size:16px;color:var(--tx2)">' + esc(a[2]) + '</div>' +
+          '<div style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:16px;color:#dfe7f3">' + esc(a[3]) + '</span><span style="font-size:13px;color:var(--tx3)">' + esc(a[4]) + '</span></div>' +
+          '<div style="display:flex;justify-content:center"><span class="dbox cond ' + dcls(a[6]) + '">' + a[6] + '</span></div>' +
+          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:#dfe7f3"><b style="color:#8fb2ff;font-weight:600">' + esc(a[7]) + '</b> ' + esc(a[8]) + '</div>' +
+          '<div style="padding-left:16px;display:flex;align-items:center;gap:12px"><span class="cond" style="font-size:22px;font-weight:600;width:50px;color:#c9d6ea">' + esc(a[5] || '—') + '</span><span class="pill p-' + r.k + '">' + r.sit + '</span></div>' +
+        '</div>'; }).join('') +
+        '<div class="foot">Fonte: ' + esc(P.fonte) + '</div></div>';
+  }
+
+  // ===== PREVENTIVA =====
+  function renderPrev(){
+    const V = DADOS.preventiva, now = new Date();
+    const todayStr = now.toLocaleDateString('pt-BR').slice(0, 5);
+    let today = V.dias.findIndex((d) => d[1] === todayStr);
+    if (today < 0) today = now > parseDM(V.dias[V.dias.length - 1][1], now.getFullYear()) ? V.dias.length : -1;
+    const rows = V.linhas.map((a) => {
+      const st = a[6] ? 'ok' : a[5] < today ? 'late' : a[5] === today ? 'today' : 'plan';
+      let sk = 'done', sit = 'Realizada', stx = '';
+      if (!a[6] && a[9] != null) { const diff = a[9] - a[2], tol = a[8] * 0.1;
+        if (diff > tol) { sk = 'venc'; sit = 'VENCIDA'; stx = 'passou ' + fmt(diff) + ' · tolerância ' + fmt(tol); }
+        else if (diff >= -tol) { sk = 'lim'; sit = 'NO LIMITE'; stx = diff >= 0 ? 'passou ' + fmt(diff) + ' de ' + fmt(tol) : 'faltam ' + fmt(-diff); }
+        else { sk = 'ok'; sit = 'Em dia'; stx = 'faltam ' + fmt(-diff); } }
+      else if (!a[6]) { sk = 'nd'; sit = 'Sem leitura'; stx = ''; }
+      return { a, st, sk, sit, stx };
+    });
+    const n = rows.length, cnt = (s) => rows.filter((r) => r.st === s).length, done = cnt('ok'), ef = Math.round(done / n * 100);
+    const cols = '120px 210px 56px 100px 130px 130px minmax(0,1fr) repeat(' + V.dias.length + ',70px) 120px';
+    const rowH = Math.max(20, Math.min(40, Math.floor(672 / Math.max(n, 1)))), cp = rowH < 30, fs = cp ? 14 : 16;
+    const cellTxt = { ok: '✓', late: '!', today: 'HOJE', plan: 'P' };
+    const tint = { ok: 'transparent', late: 'rgba(217,58,58,.16)', today: 'rgba(59,111,230,.18)', plan: 'transparent' };
+    const lastC = { venc: '#ff8a8a', lim: '#ffcf6b', ok: '#eef3fa', done: '#5f769c', nd: '#5f769c' };
+    $('s1').innerHTML =
+      '<div class="kpis" style="grid-template-columns:2fr repeat(6,minmax(0,1fr)) 1.5fr">' +
+        '<div class="k big"><span class="v cond">' + ef + '%</span><div style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="font-size:17px;color:var(--tx2)">Eficiência · <b style="color:var(--tx)">' + done + ' de ' + n + '</b> realizadas</span><div class="bar" style="height:10px"><div style="width:' + ef + '%"></div></div></div></div>' +
+        '<div class="k red"><span class="l">Atrasadas</span><span class="v cond" style="color:var(--red2)">' + cnt('late') + '</span></div>' +
+        '<div class="k blue"><span class="l">Programadas hoje</span><span class="v cond" style="color:#8fb2ff">' + cnt('today') + '</span></div>' +
+        '<div class="k"><span class="l">A fazer na semana</span><span class="v cond">' + cnt('plan') + '</span></div>' +
+        (rows.some((r) => r.a[9] != null) ? '<div class="k red"><span class="l">Horímetro vencido</span><span class="v cond" style="color:var(--red2)">' + rows.filter((r) => r.sk === 'venc').length + '<span style="font-size:24px;color:var(--amber2)"> · ' + rows.filter((r) => r.sk === 'lim').length + ' no limite</span></span></div>' : '<div class="k dash"><span class="l">Horímetro vencido</span><span class="v cond" style="font-size:30px;color:var(--tx3)">sem leitura</span></div>') +
+        '<div class="k"><span class="l">Caixa parcial</span><span class="v cond" style="color:var(--amber2)">' + rows.filter((r) => r.st !== 'ok' && r.a[7] === 'Parcial').length + '</span></div>' +
+        '<div class="k"><span class="l">Terceiros</span><span class="v cond" style="color:var(--green2)">' + esc(V.terceiros) + '</span></div>' +
+        '<div class="k legend"><span><span class="cell c-ok">✓</span>Realizada</span><span><span class="cell c-late">!</span>Atrasada</span><span><span class="cell c-today" style="font-size:10px">HOJE</span>Hoje</span><span><span class="cell c-plan">P</span>Programada</span></div>' +
+      '</div>' +
+      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + ';height:46px"><div style="padding-left:14px">Prefixo</div><div>Modelo</div><div style="text-align:center">Seq</div><div>OS</div><div style="text-align:right;padding-right:14px">Horím. previsto</div><div style="text-align:right;padding-right:14px;color:var(--tx)">Últ. abastec.</div><div style="padding-left:14px;color:var(--tx)">Situação do horímetro</div>' +
+        V.dias.map((d, i) => '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;line-height:1.05;' + (i === today ? 'background:var(--today);color:#fff' : '') + '"><span>' + d[0] + '</span><span class="cond" style="font-size:20px;letter-spacing:0">' + d[1].slice(0, 2) + '</span></div>').join('') +
+        '<div style="padding-left:16px">Caixa</div></div>' +
+        rows.map((r) => { const a = r.a; return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px;background:' + tint[r.st] + ';opacity:' + (r.st === 'ok' ? .72 : 1) + '">' +
+          '<div class="pf cond" style="padding-left:14px;font-size:' + (cp ? 21 : 25) + 'px">' + esc(a[0]) + '</div>' +
+          '<div style="font-size:' + fs + 'px;color:#c9d6ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">' + esc(a[1]) + '</div>' +
+          '<div style="display:flex;justify-content:center"><span style="' + (Number(a[3]) >= 3 ? 'background:#f2d33b;color:#1d1405;border-radius:6px;padding:0 9px;font-weight:700;font-size:17px' : 'color:#c9d6ea;font-size:17px') + '">' + esc(a[3]) + '</span></div>' +
+          '<div style="font-size:' + fs + 'px;color:var(--tx2)">' + esc(a[4]) + '</div>' +
+          '<div style="text-align:right;padding-right:14px;font-size:18px;color:#c9d6ea">' + (a[2] ? fmt(a[2]) : '—') + '</div>' +
+          '<div class="cond" style="text-align:right;padding-right:14px;font-size:24px;font-weight:700;color:' + lastC[r.sk] + '">' + (a[9] != null && !a[6] ? fmt(a[9]) : '—') + '</div>' +
+          '<div style="padding-left:14px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden"><span class="pill p-' + r.sk + '" style="min-width:92px;text-align:center;' + (cp ? 'font-size:13px;padding:1px 10px' : '') + '">' + r.sit + '</span><span style="font-size:15px;color:var(--tx2)">' + r.stx + '</span></div>' +
+          V.dias.map((d, i) => '<div class="dcol" style="' + (i === today ? 'background:rgba(59,111,230,.10)' : '') + '">' + (i === a[5] ? '<span class="cell c-' + r.st + '">' + cellTxt[r.st] + '</span>' : '') + '</div>').join('') +
+          '<div style="padding-left:16px">' + (a[7] === 'Parcial' ? '<span style="background:rgba(224,165,46,.18);color:var(--amber2);border-radius:999px;padding:2px 10px;font-size:14px;font-weight:600">Parcial</span>' : '<span style="color:#8fa8cc;font-size:14px">' + esc(a[7]) + '</span>') + '</div>' +
+        '</div>'; }).join('') +
+        '<div class="foot">' + esc(V.nota) + '</div></div>';
+  }
+
+
+  // ===== PREVENTIVA - PRÓXIMA SEMANA =====
+  function renderProxima(){
+    const X = DADOS.proxima;
+    const TAG = {
+      parada: ['#b28cff', '#1a0f33', 'PARADA AGORA'], parcial: ['#e0a52e', '#1d1405', 'CAIXA PARCIAL'],
+      impl: ['#2c3e5c', '#dfe7f3', 'IMPLEMENTO'], aberta: ['#d93a3a', '#ffffff', 'OS ABERTA']
+    };
+    const tagHtml = (f) => {
+      let t = TAG[f];
+      if (!t && f.indexOf('gar:') === 0) t = ['#3b6fe6', '#ffffff', 'GARANTIA ' + f.slice(4)];
+      if (!t && f.indexOf('feita:') === 0) t = ['#1f7a47', '#e6fff0', 'FEITA ' + f.slice(6)];
+      if (!t && f.indexOf('txt:') === 0) t = ['#d93a3a', '#ffffff', f.slice(4)];
+      return t ? '<span style="background:' + t[0] + ';color:' + t[1] + ';border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;white-space:nowrap">' + esc(t[2]) + '</span>' : '';
+    };
+    const itens = X.itens.map((a) => ({ dia: a[0], pf: a[1], mod: a[2], seq: a[3], os: a[4], caixa: a[5], fl: a[6] || [],
+      feita: (a[6] || []).some((f) => f.indexOf('feita:') === 0), parada: (a[6] || []).indexOf('parada') >= 0, gar: (a[6] || []).some((f) => f.indexOf('gar:') === 0) }));
+    const porDia = X.dias.map((d, i) => itens.filter((it) => it.dia === i));
+    let maxI = 0; porDia.forEach((l, i) => { if (l.length > porDia[maxI].length) maxI = i; });
+    const pend = itens.filter((it) => !it.feita);
+    const k = (cls, lab, val, extra, st) => '<div class="k ' + cls + '" style="' + (st || '') + '"><span class="l">' + lab + '</span><span class="v cond">' + val + (extra ? '<span style="font-size:22px"> ' + extra + '</span>' : '') + '</span></div>';
+    const lista = (titulo, cor, bg, sub, rows, line) => '<section style="background:' + bg + ';border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden">' +
+      '<h2 class="cond" style="margin:0;font-size:26px;font-weight:700;color:' + cor + '">' + titulo + '</h2>' + (sub ? '<span style="font-size:14px;color:#c9b8ea">' + sub + '</span>' : '') +
+      (rows.length ? rows.map((r) => '<div style="display:flex;align-items:baseline;gap:10px;border-top:1px solid ' + line + ';padding-top:6px"><span class="cond" style="font-weight:700;font-size:24px;width:92px;flex:none;white-space:nowrap">' + esc(r[0]) + '</span><span style="font-size:15px;color:#e6ecf5;flex:1">' + esc(r[1]) + '</span></div>').join('') : '<span style="font-size:15px;color:var(--tx3)">Nada para esta semana</span>') + '</section>';
+    $('s2').innerHTML =
+      '<div class="kpis" style="grid-template-columns:1.25fr repeat(4,minmax(0,1fr)) 2.4fr">' +
+        k('', 'Programadas na semana', itens.length, itens.filter((i) => i.feita).length ? '<span style="color:var(--green2)">· ' + itens.filter((i) => i.feita).length + ' já antecipadas</span>' : '') +
+        k('', 'Dia mais cheio', '<span style="color:#8fb2ff">' + X.dias[maxI][0] + '</span>', '<span style="color:#8fb2ff">· ' + porDia[maxI].length + '</span>', 'border:2px solid #8fb2ff') +
+        k('', '<span style="color:#f6e2b3">Separar peças</span>', '<span style="color:var(--amber2)">' + pend.filter((i) => i.caixa === 'Parcial').length + '</span>', '<span style="color:var(--amber2)">caixa parcial</span>', 'background:#3d2f12;border:2px solid var(--amber)') +
+        k('', '<span style="color:#d8c6ff">Aproveitar parada</span>', '<span style="color:#d4b8ff">' + pend.filter((i) => i.parada).length + '</span>', '', 'background:#241a3e;border:2px solid #b28cff') +
+        k('', 'Garantia · agendar', pend.filter((i) => i.gar).length, '') +
+        '<div class="k" style="gap:2px"><span class="l" style="font-size:15px">Eficiência do mês por semana</span><div style="display:grid;grid-template-columns:repeat(' + X.mes.length + ',minmax(0,1fr));gap:12px;align-items:end">' +
+          X.mes.map((m) => '<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div style="display:flex;align-items:baseline;justify-content:space-between"><span class="cond" style="font-size:20px;font-weight:700;line-height:1">' + esc(m[0]) + '</span><span class="cond" style="font-size:24px;font-weight:700;color:' + m[4] + '">' + esc(m[1]) + '</span></div><div class="bar"><div style="width:' + m[3] + '%;background:' + m[4] + '"></div></div><span style="font-size:12px;color:#8fa8cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1">' + esc(m[2]) + '</span></div>').join('') +
+        '</div></div>' +
+      '</div>' +
+      '<div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:16px;min-height:0">' +
+        '<section style="background:var(--card);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:' + X.dias.map((d, i) => porDia[i].length ? 'minmax(0,1fr)' : 'minmax(0,.55fr)').join(' ') + ';min-height:0">' +
+          X.dias.map((d, i) => { const l = porDia[i], busy = l.length >= 6;
+            return '<div style="border-left:' + (i ? '1px solid var(--line)' : 'none') + ';display:flex;flex-direction:column;min-width:0;min-height:0">' +
+              '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;background:' + (busy ? 'var(--today)' : 'var(--card2)') + ';color:' + (busy ? '#fff' : '#c9d6ea') + '"><span style="font-size:15px;font-weight:600;letter-spacing:.06em">' + d[0] + '</span><span class="cond" style="font-size:30px;font-weight:700;line-height:1">' + d[1] + '</span><span style="font-size:14px;opacity:.85">' + (l.length ? l.length + (l.length > 1 ? ' máquinas' : ' máquina') : 'sem programação') + '</span></div>' +
+              '<div style="display:flex;flex-direction:column;gap:' + (l.length >= 7 ? 5 : 8) + 'px;padding:' + (l.length >= 7 ? '6px 6px' : '10px 8px') + ';overflow:hidden">' +
+              l.map((c) => { const cp = l.length >= 7; return '<div style="background:' + (c.feita ? 'rgba(31,122,71,.22)' : 'var(--card2)') + ';border:' + (c.parada ? '2px solid #b28cff' : c.caixa === 'Parcial' ? '2px solid var(--amber)' : '1px solid var(--line2)') + ';border-radius:10px;padding:' + (cp ? '4px 9px' : '7px 10px') + ';display:flex;flex-direction:column;gap:' + (cp ? 1 : 3) + 'px;opacity:' + (c.feita ? .75 : 1) + ';min-width:0">' +
+                '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px"><span class="cond" style="font-weight:700;font-size:' + (cp ? 22 : 25) + 'px;white-space:nowrap;line-height:1.1">' + esc(c.pf) + '</span><span style="' + (Number(c.seq) >= 3 ? 'background:#f2d33b;color:#1d1405;border-radius:5px;padding:0 7px;font-weight:700' : 'color:var(--tx2)') + ';font-size:13px;white-space:nowrap">seq ' + esc(c.seq) + '</span></div>' +
+                '<span style="font-size:' + (cp ? 12 : 13) + 'px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.mod) + (c.os ? ' · OS ' + esc(c.os) : ' · sem OS') + '</span>' +
+                (c.fl.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px">' + c.fl.map(tagHtml).join('') + '</div>' : '') +
+              '</div>'; }).join('') + '</div></div>'; }).join('') +
+        '</section>' +
+        '<div style="display:flex;flex-direction:column;gap:14px;min-height:0">' +
+          lista('APROVEITAR A PARADA', '#d4b8ff', '#241a3e', 'Máquinas paradas na oficina com preventiva na semana', X.aprov, '#3a2c5e') +
+          lista('SEPARAR PEÇAS · CAIXA PARCIAL', 'var(--amber2)', 'var(--card)', '', X.pecas, 'var(--line)') +
+          lista('REVISAR NA PROGRAMAÇÃO', 'var(--red2)', 'var(--card)', '', X.revisar, 'var(--line)') +
+        '</div>' +
+      '</div>';
+  }
+
+  renderParadas(); renderPrev(); renderProxima();
+
+  // ===== ROTAÇÃO =====
+  let screen = 0, elapsed = 0, paused = false, secs = 30;
+  try { secs = Number(localStorage.getItem('painelTV.secs')) || 30; } catch (e) {}
+  $('secs').value = String(secs);
+  function show(){
+    $('s0').style.display = screen === 0 ? 'flex' : 'none';
+    $('s1').style.display = screen === 1 ? 'flex' : 'none';
+    $('s2').style.display = screen === 2 ? 'flex' : 'none';
+    $('t0').classList.toggle('on', screen === 0); $('t1').classList.toggle('on', screen === 1); $('t2').classList.toggle('on', screen === 2);
+    $('chip').textContent = screen === 0 ? 'MÁQUINAS PARADAS · ' + DADOS.obra : screen === 1 ? 'PREVENTIVA · ' + DADOS.preventiva.titulo : 'PREVENTIVA - PRÓXIMA SEMANA · ' + DADOS.proxima.titulo;
+    $('pbar').style.width = (elapsed / secs * 100) + '%';
+    $('rest').textContent = paused ? 'Pausado' : 'Próxima tela em ' + Math.max(0, secs - elapsed) + ' s';
+    $('pause').textContent = paused ? 'Continuar' : 'Pausar';
+  }
+  const go = (i) => { screen = i; elapsed = 0; show(); };
+  $('t0').onclick = () => go(0); $('t1').onclick = () => go(1); $('t2').onclick = () => go(2);
+  $('pause').onclick = () => { paused = !paused; show(); };
+  $('secs').onchange = (e) => { secs = Number(e.target.value) || 30; elapsed = 0; try { localStorage.setItem('painelTV.secs', String(secs)); } catch (er) {} show(); };
+  setInterval(() => { if (paused) return; elapsed++; if (elapsed >= secs) { elapsed = 0; screen = (screen + 1) % 3; } show(); }, 1000);
+  show();
+
+  // recarrega a página a cada 10 min para pegar a versão nova do arquivo
+  setTimeout(() => location.reload(), 10 * 60 * 1000);
+}
+</script>
+
+<script>
+(function(){
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  async function abrir(senha){
+    const E = DADOS_ENC;
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(E.salt), iterations: E.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(E.iv) }, key, b64(E.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  const lock = document.getElementById('lock'), msg = document.getElementById('lockMsg');
+  async function tentar(senha, lembrar){
+    try {
+      const dados = await abrir(senha);
+      if (lembrar) { try { localStorage.setItem('painelTV.pw', senha); } catch (e) {} }
+      lock.style.display = 'none';
+      iniciar(dados);
+      return true;
+    } catch (e) {
+      try { localStorage.removeItem('painelTV.pw'); } catch (er) {}
+      return false;
+    }
+  }
+  if (!window.crypto || !crypto.subtle) { msg.textContent = 'Este navegador não suporta a abertura segura. Use um navegador atualizado.'; return; }
+  let salva = null; try { salva = localStorage.getItem('painelTV.pw'); } catch (e) {}
+  if (salva) tentar(salva, true);
+  document.getElementById('lockForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msg.textContent = 'Abrindo…';
+    const ok = await tentar(document.getElementById('pw').value, document.getElementById('rem').checked);
+    if (!ok) msg.textContent = 'Senha incorreta.';
+  });
+})();
+</script>
+</body>
+</html>
