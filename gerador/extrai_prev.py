@@ -86,3 +86,37 @@ if __name__ == '__main__':
     json.dump(r, open(sys.argv[2], 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     for s in r['semanas']:
         print(s['titulo'], len(s['itens']), 'itens,', sum(i[6] for i in s['itens']), 'realizadas')
+
+
+def ler_horimetros(src):
+    """Lê a camada 'ULTIMO HORIMETRO' (fonte Helvetica) que vem sobreposta no PDF atualizado.
+
+    Devolve {numero_semana: {'data': 'dd/mm', 'valores': [int|None, ...]}} na ordem das linhas.
+    """
+    res = {}
+    with pdfplumber.open(src) as p:
+        for pg in p.pages:
+            camada = pg.filter(lambda o: o.get('object_type') != 'char' or o.get('fontname', '').startswith('Helvetica'))
+            ws = camada.extract_words()
+            txt = ' '.join(w['text'] for w in ws)
+            ms = re.search(r'SEMANA (\d).*?ATUALIZADOS EM (\d\d/\d\d)', txt)
+            if not ms or 'HORIMETRO' not in txt:
+                continue
+            cab = [w for w in ws if w['text'] == 'HORIMETRO']
+            if not cab:
+                continue
+            x0, topo = cab[0]['x0'] - 15, cab[0]['top']
+            linhas = {}
+            for w in ws:
+                if w['top'] > topo + 4 and x0 <= w['x0'] <= x0 + 50 and not w['text'].startswith('Ultima'):
+                    k = round(w['top'])
+                    linhas.setdefault(k, []).append(w['text'])
+            vals = []
+            for k in sorted(linhas):
+                t = ' '.join(linhas[k])
+                if 'Sem' in t:
+                    vals.append(None)
+                elif re.fullmatch(r'[\d.]+', t):
+                    vals.append(int(t.replace('.', '')))
+            res[int(ms.group(1))] = {'data': ms.group(2), 'valores': vals}
+    return res

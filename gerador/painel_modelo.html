@@ -122,8 +122,8 @@ function iniciar(DADOS){
     const leve = (mod) => /OROCH|KWID|SAVEIRO|BUS |DAILY|STRADA|HILUX|S10|AMAROK|RENEGADE/i.test(mod);
     DADOS.preventiva = {
       titulo: atual.titulo, dias: atual.dias, terceiros: M.terceiros,
-      nota: 'Tolerância de 10% do intervalo · intervalo: 250 h (máquinas e caminhões) e 10.000 km (veículos leves e ônibus) · último abastecimento: aguardando relatório de abastecimento',
-      linhas: unicos(atual.itens.filter(valida)).map((it) => [it[0], it[1], num(it[2]), it[3], it[4] || '—', it[5], it[6], it[7] || '—', leve(it[1]) ? 10000 : 250, null])
+      nota: 'Tolerância de 10% do intervalo · intervalo: 250 h (máquinas e caminhões) e 10.000 km (veículos leves e ônibus) · ' + (atual.horimetroData ? 'último horímetro: leitura do abastecimento até ' + atual.horimetroData : 'último horímetro: sem leitura de abastecimento nesta semana'),
+      linhas: unicos(atual.itens.filter(valida)).map((it) => [it[0], it[1], num(it[2]), it[3], it[4] || '—', it[5], it[6], it[7] || '—', leve(it[1]) ? 10000 : 250, it[10] == null ? null : it[10]])
     };
     // próxima semana
     const paradas = {}; DADOS.paradas.linhas.forEach((l) => { paradas[l[0]] = l; });

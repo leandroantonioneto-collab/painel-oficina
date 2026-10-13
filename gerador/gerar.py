@@ -75,6 +75,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--maqpar', required=True)
     ap.add_argument('--preventiva', required=True)
+    ap.add_argument('--horimetro', help='PDF com a camada ULTIMO HORIMETRO (opcional)')
     ap.add_argument('--config', required=True)
     ap.add_argument('--saida', required=True)
     a = ap.parse_args()
@@ -84,6 +85,17 @@ def main():
     ref = ddmm(mq['dataRelatorio'])
     prev = extrai_prev.ler(a.preventiva)
     prev['terceiros'] = cfg.get('terceiros', '8/8 OK')
+    if a.horimetro:
+        for n, h in extrai_prev.ler_horimetros(a.horimetro).items():
+            for sem in prev['semanas']:
+                if sem['n'] == n:
+                    if len(h['valores']) == len(sem['itens']):
+                        for it, v in zip(sem['itens'], h['valores']):
+                            it.append(v)
+                        sem['horimetroData'] = h['data']
+                        print('horimetro semana', n, ':', sum(v is not None for v in h['valores']), 'leituras de', h['data'])
+                    else:
+                        print('AVISO horimetro semana', n, ': linhas nao batem', len(h['valores']), 'x', len(sem['itens']))
 
     agora = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3)))
     dados = {
