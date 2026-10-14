@@ -12,7 +12,7 @@ import sys
 import pdfplumber
 
 INICIO = re.compile(
-    r'^([A-Z]{2,4} \d{4}) (\d+) (.+?) (\d+/ ?\d+) (?:O\.S\. )?(\d\d/\d\d/\d{4}) (\d\d:\d\d) (\d\d/\d\d/\d{4}) (\d\d:\d\d)\b'
+    r'^([A-Z]{2,4} \d{4}) (\d+) (.+?) (\d+/ ?\d+) (?:O\.S\. )?(\d\d/\d\d/\d{4}) (\d\d:\d\d) (\d\d/\d\d/\d{4}) (?:(\S*[A-Za-zÀ-ú]\S*) )?(\d\d:\d\d)\b'
 )
 PECA = re.compile(r'\bP[CÇ]\b|PE[CÇ]AS?\b|KIT|AGUARDANDO|FATURADO|EMBARC', re.I)
 DATA = re.compile(r'\d\d/\d\d/\d{4}')
@@ -21,7 +21,9 @@ CABEC = re.compile(r'^(Equip|Dias|Parados|\d\d\.\d\d\.\d{4})')
 
 
 def _linhas(pg):
-    ws = sorted(pg.extract_words(), key=lambda w: (round(w['top']), w['x0']))
+    # use_text_flow: textos sobrepostos na mesma altura (ex.: prognóstico em 2 linhas
+    # passando por cima da hora da previsão) não se misturam letra a letra.
+    ws = sorted(pg.extract_words(use_text_flow=True), key=lambda w: (round(w['top']), w['x0']))
     out = []
     for w in ws:
         if out and abs(out[-1]['top'] - w['top']) < 3:
@@ -58,7 +60,9 @@ def ler(src):
                         if DATA.fullmatch(w['text']) and i + 1 < len(resto) and HORA.fullmatch(resto[i + 1]['text']):
                             x = w['x0']
                             break
-                    regs.append({'g': list(m.groups()), 'prog': [], 'obs': [], 'x': x})
+                    g = list(m.groups())
+                    intruso = g.pop(7)  # palavra do prognóstico que caiu antes da hora da previsão
+                    regs.append({'g': g, 'prog': [intruso] if intruso else [], 'obs': [], 'x': x})
                     for w in resto:
                         _poe(regs[-1], w)
                 elif regs and not CABEC.match(L['txt']):
