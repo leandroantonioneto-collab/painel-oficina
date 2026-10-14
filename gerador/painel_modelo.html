@@ -55,7 +55,37 @@ select.btn{padding:0 12px}
 .prog{flex:1;display:flex;align-items:center;gap:14px}
 .prog .bar>div{background:#5d8cff;transition:width 1s linear}
 .muted{color:var(--tx2)}
+
+:root{--x-tx2b:#c9d6ea;--x-blue:#8fb2ff;--x-amber:#ffcf6b;--x-soft:#dfe7f3;--x-red:#ff8a8a;--x-strong:#eef3fa;--x-green:#6fe3a2;--x-foot:#8fa8cc;--x-soft2:#e6ecf5;--x-dim:#5f769c;--x-pur1:#d4b8ff;--x-pur2:#b28cff;--x-pur3:#d8c6ff;--x-pur4:#c9b8ea;--x-purbg1:#241a3e;--x-purbg2:#3a2c5e;--x-purbg3:#1a0f33;--x-donebg:rgba(31,122,71,.22);--x-ambbg:#3d2f12;--x-amblbl:#f6e2b3}
+/* ===== TEMA DIURNO (fundo branco) ===== */
+html[data-tema="claro"]{--bg:#ffffff;--card:#f2f5fa;--card2:#e3e9f3;--line:#d5dde9;--line2:#c3cedf;--tx:#13233f;--tx2:#4a5d7c;--tx3:#7d8ca5;--blue:#1f4fb4;--today:#2f62d9;--green:#1e9e5a;--green2:#13834a;--greenbg:#1f8a4f;--amber:#e0a52e;--amber2:#a86400;--red:#d93a3a;--red2:#c42222;--redbg:#fdecec;--x-tx2b:#3d4f6b;--x-blue:#1f4fb4;--x-amber:#a86400;--x-soft:#2c3e5c;--x-red:#c42222;--x-strong:#13233f;--x-green:#13834a;--x-foot:#5a6f90;--x-soft2:#2c3e5c;--x-dim:#7d8ca5;--x-pur1:#6b3fc4;--x-pur2:#7c4ddb;--x-pur3:#5a2fb0;--x-pur4:#5a4a80;--x-purbg1:#f1eaff;--x-purbg2:#d9c8ff;--x-purbg3:#efe6ff;--x-donebg:rgba(30,158,90,.14);--x-ambbg:#fff3d6;--x-amblbl:#7a4b00}
+html[data-tema="claro"],html[data-tema="claro"] body{background:#fff}
+html[data-tema="claro"] .top{color:#fff}
+html[data-tema="claro"] .chip{background:#fff;color:#1f4fb4}
+html[data-tema="claro"] .k,html[data-tema="claro"] .infos .i,html[data-tema="claro"] .tbl{border:1px solid var(--line)}
+html[data-tema="claro"] .k.red{background:#fdecec;border:2px solid #e05656}html[data-tema="claro"] .k.red .l{color:#a32020}
+html[data-tema="claro"] .k.blue{background:#e8efff;border:2px solid #5d8cff}html[data-tema="claro"] .k.blue .l{color:#2a4fa8}
+html[data-tema="claro"] .k.dash{border:2px dashed var(--tx3)}
+html[data-tema="claro"] .bar{background:#dbe3ef}
+html[data-tema="claro"] .infos .i span{color:#2c3e5c}
+html[data-tema="claro"] .foot{color:#5a6f90}
+html[data-tema="claro"] .p-sem{color:#3d4f6b}html[data-tema="claro"] .p-ok{background:rgba(30,158,90,.14)}
+html[data-tema="claro"] .d8{color:#a86400}
+html[data-tema="claro"] .c-ok{color:#fff}html[data-tema="claro"] .c-plan{color:#3d4f6b}
+html[data-tema="claro"] .legend{color:#3d4f6b}
+html[data-tema="claro"] .btn.on{background:#1f4fb4;color:#fff;border-color:#1f4fb4}
+html[data-tema="claro"] #upd{color:#dbe6ff!important}
+html[data-tema="claro"] #lock{background:#fff!important}
+html[data-tema="claro"] #lockForm{background:#f2f5fa!important;border:1px solid #d5dde9;color:#13233f!important}
+html[data-tema="claro"] #lockForm label{color:#3d4f6b!important}
+html[data-tema="claro"] #pw{background:#fff!important;color:#13233f!important;border-color:#c3cedf!important}
 </style>
+<script>
+/* tema: escuro (noturno), claro (diurno) ou auto (diurno das 6h às 18h) */
+function temaEscolhido(){ try { return localStorage.getItem('painelTV.tema') || 'escuro'; } catch (e) { return 'escuro'; } }
+function aplicarTema(){ let t = temaEscolhido(); if (t === 'auto') { const h = new Date().getHours(); t = (h >= 6 && h < 18) ? 'claro' : 'escuro'; } document.documentElement.setAttribute('data-tema', t); }
+aplicarTema(); setInterval(aplicarTema, 60000);
+</script>
 </head>
 <body>
 <div id="stage">
@@ -73,6 +103,8 @@ select.btn{padding:0 12px}
       <button class="btn" id="pause" type="button" style="min-width:130px">Pausar</button>
       <label for="secs" class="muted" style="font-size:18px;margin-left:10px">Trocar a cada</label>
       <select class="btn" id="secs"><option value="15">15 s</option><option value="30">30 s</option><option value="45">45 s</option><option value="60">1 min</option><option value="120">2 min</option><option value="300">5 min</option></select>
+      <label for="tema" class="muted" style="font-size:18px;margin-left:10px">Tema</label>
+      <select class="btn" id="tema"><option value="escuro">Noturno</option><option value="claro">Diurno</option><option value="auto">Automático</option></select>
     </div>
   </div>
 </div>
@@ -153,9 +185,9 @@ function iniciar(DADOS){
     prox.dias.forEach((d, i) => { const n = itens.filter((x) => x[0] === i).length; if (n >= 7) revisar.push([dname(i), n + ' preventivas no mesmo dia · avaliar distribuir']); });
     const mes = M.semanas.map((w, i) => {
       const its = unicos(w.itens.filter(valida)), feitos = its.filter((it) => it[6]).length, pct = its.length ? Math.round(feitos / its.length * 100) : 0;
-      if (i < iAt) return ['S' + w.n, pct + '%', feitos + ' de ' + its.length + ' · encerrada', pct, pct >= 80 ? '#6fe3a2' : '#ffcf6b'];
-      if (i === iAt) return ['S' + w.n, feitos + '/' + its.length, 'semana atual', pct, '#8fb2ff'];
-      return ['S' + w.n, String(its.length), 'programadas · ' + its.filter((it) => it[7] === 'Parcial').length + ' parciais', 0, '#c9d6ea'];
+      if (i < iAt) return ['S' + w.n, pct + '%', feitos + ' de ' + its.length + ' · encerrada', pct, pct >= 80 ? 'var(--x-green)' : 'var(--x-amber)'];
+      if (i === iAt) return ['S' + w.n, feitos + '/' + its.length, 'semana atual', pct, 'var(--x-blue)'];
+      return ['S' + w.n, String(its.length), 'programadas · ' + its.filter((it) => it[7] === 'Parcial').length + ' parciais', 0, 'var(--x-tx2b)'];
     });
     DADOS.proxima = { titulo: prox === atual ? prox.titulo + ' (fim da programação)' : prox.titulo, dias: prox.dias, itens, mes, aprov, pecas, revisar: revisar.slice(0, 5) };
   })();
@@ -176,29 +208,29 @@ function iniciar(DADOS){
     const temProg = P.linhas.some((a) => a[10]);
     const cols = temProg ? '200px 90px 110px 100px 330px minmax(0,1fr) 250px' : '230px 110px 120px 110px minmax(0,1fr) 270px';
     const rowH = Math.max(40, Math.min(58, Math.floor(600 / Math.max(n, 1))));
-    const labC = { red: '#ff8a8a', green: '#6fe3a2', gray: '#c9d6ea', amber: '#ffcf6b' };
+    const labC = { red: 'var(--x-red)', green: 'var(--x-green)', gray: 'var(--x-tx2b)', amber: 'var(--x-amber)' };
     $('s0').innerHTML =
       '<div class="kpis" style="grid-template-columns:1.6fr repeat(6,minmax(0,1fr))">' +
         '<div class="k big"><span class="v cond">' + df.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%</span><div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="l" style="font-size:17px;color:var(--tx2)">Disponibilidade física</span><span style="font-size:16px">' + n + ' parados de <b>' + DADOS.frota + '</b> equipamentos</span><div class="bar"><div style="width:' + df + '%"></div></div></div></div>' +
         '<div class="k"><span class="l">Máquinas paradas</span><span class="v cond">' + n + '</span></div>' +
         '<div class="k red"><span class="l">Previsão vencida</span><span class="v cond" style="color:var(--red2)">' + cnt('venc') + '<span style="font-size:22px;color:var(--amber2)"> · ' + cnt('hoje') + ' vence hoje</span></span></div>' +
-        '<div class="k dash"><span class="l" style="color:#c9d6ea">Sem previsão de saída</span><span class="v cond">' + cnt('sem') + '</span></div>' +
+        '<div class="k dash"><span class="l" style="color:var(--x-tx2b)">Sem previsão de saída</span><span class="v cond">' + cnt('sem') + '</span></div>' +
         '<div class="k"><span class="l">Aguardando peça</span><span class="v cond" style="color:var(--amber2)">' + rows.filter((r) => r.a[9]).length + '</span></div>' +
         '<div class="k"><span class="l">Paradas há +30 dias</span><span class="v cond" style="color:var(--red2)">' + rows.filter((r) => r.a[6] >= 30).length + '</span></div>' +
         '<div class="k"><span class="l">Tempo médio parado</span><span class="v cond">' + media + '<span style="font-size:24px;color:var(--tx2)"> dias</span></span></div>' +
       '</div>' +
       '<div class="infos"><div class="h cond">INFORMAÇÕES IMPORTANTES</div>' +
-        P.infos.map((i) => '<div class="i"><b style="color:' + (labC[i[1]] || '#c9d6ea') + '">' + esc(i[0]) + '</b><span class="clamp">' + esc(i[2]) + '</span></div>').join('') +
+        P.infos.map((i) => '<div class="i"><b style="color:' + (labC[i[1]] || 'var(--x-tx2b)') + '">' + esc(i[0]) + '</b><span class="clamp">' + esc(i[2]) + '</span></div>').join('') +
       '</div>' +
       '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>O.S.</div><div>Entrada</div><div style="text-align:center">Dias parado</div>' + (temProg ? '<div style="padding-left:16px">Prognóstico</div>' : '') + '<div style="padding-left:16px">Última observação</div><div style="padding-left:16px">Previsão de saída</div></div>' +
         rows.map((r) => { const a = r.a; return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
           '<div style="padding-left:14px;display:flex;flex-direction:column;line-height:1.05;min-width:0"><span class="pf cond" style="font-size:28px">' + esc(a[0]) + '</span><span style="font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a[1]) + '</span></div>' +
           '<div style="font-size:16px;color:var(--tx2)">' + esc(a[2]) + '</div>' +
-          '<div style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:16px;color:#dfe7f3">' + esc(a[3]) + '</span><span style="font-size:13px;color:var(--tx3)">' + esc(a[4]) + '</span></div>' +
+          '<div style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:16px;color:var(--x-soft)">' + esc(a[3]) + '</span><span style="font-size:13px;color:var(--tx3)">' + esc(a[4]) + '</span></div>' +
           '<div style="display:flex;justify-content:center"><span class="dbox cond ' + dcls(a[6]) + '">' + a[6] + '</span></div>' +
-          (temProg ? '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:#eef3fa;font-weight:500">' + esc(a[10] || '—') + '</div>' : '') +
-          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:#dfe7f3"><b style="color:#8fb2ff;font-weight:600">' + esc(a[7]) + '</b> ' + esc(a[8]) + '</div>' +
-          '<div style="padding-left:16px;display:flex;align-items:center;gap:12px"><span class="cond" style="font-size:22px;font-weight:600;width:50px;color:#c9d6ea">' + esc(a[5] || '—') + '</span><span class="pill p-' + r.k + '">' + r.sit + '</span></div>' +
+          (temProg ? '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:var(--x-strong);font-weight:500">' + esc(a[10] || '—') + '</div>' : '') +
+          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:var(--x-soft)"><b style="color:var(--x-blue);font-weight:600">' + esc(a[7]) + '</b> ' + esc(a[8]) + '</div>' +
+          '<div style="padding-left:16px;display:flex;align-items:center;gap:12px"><span class="cond" style="font-size:22px;font-weight:600;width:50px;color:var(--x-tx2b)">' + esc(a[5] || '—') + '</span><span class="pill p-' + r.k + '">' + r.sit + '</span></div>' +
         '</div>'; }).join('') +
         '<div class="foot">Fonte: ' + esc(P.fonte) + '</div></div>';
   }
@@ -224,12 +256,12 @@ function iniciar(DADOS){
     const rowH = Math.max(20, Math.min(40, Math.floor(672 / Math.max(n, 1)))), cp = rowH < 30, fs = cp ? 14 : 16;
     const cellTxt = { ok: '✓', late: '!', today: 'HOJE', plan: 'P' };
     const tint = { ok: 'transparent', late: 'rgba(217,58,58,.16)', today: 'rgba(59,111,230,.18)', plan: 'transparent' };
-    const lastC = { venc: '#ff8a8a', lim: '#ffcf6b', ok: '#eef3fa', done: '#5f769c', nd: '#5f769c' };
+    const lastC = { venc: 'var(--x-red)', lim: 'var(--x-amber)', ok: 'var(--x-strong)', done: 'var(--x-dim)', nd: 'var(--x-dim)' };
     $('s1').innerHTML =
       '<div class="kpis" style="grid-template-columns:2fr repeat(6,minmax(0,1fr)) 1.5fr">' +
         '<div class="k big"><span class="v cond">' + ef + '%</span><div style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="font-size:17px;color:var(--tx2)">Eficiência · <b style="color:var(--tx)">' + done + ' de ' + n + '</b> realizadas</span><div class="bar" style="height:10px"><div style="width:' + ef + '%"></div></div></div></div>' +
         '<div class="k red"><span class="l">Atrasadas</span><span class="v cond" style="color:var(--red2)">' + cnt('late') + '</span></div>' +
-        '<div class="k blue"><span class="l">Programadas hoje</span><span class="v cond" style="color:#8fb2ff">' + cnt('today') + '</span></div>' +
+        '<div class="k blue"><span class="l">Programadas hoje</span><span class="v cond" style="color:var(--x-blue)">' + cnt('today') + '</span></div>' +
         '<div class="k"><span class="l">A fazer na semana</span><span class="v cond">' + cnt('plan') + '</span></div>' +
         (rows.some((r) => r.a[9] != null) ? '<div class="k red"><span class="l">Horímetro vencido</span><span class="v cond" style="color:var(--red2)">' + rows.filter((r) => r.sk === 'venc').length + '<span style="font-size:24px;color:var(--amber2)"> · ' + rows.filter((r) => r.sk === 'lim').length + ' no limite</span></span></div>' : '<div class="k dash"><span class="l">Horímetro vencido</span><span class="v cond" style="font-size:30px;color:var(--tx3)">sem leitura</span></div>') +
         '<div class="k"><span class="l">Caixa parcial</span><span class="v cond" style="color:var(--amber2)">' + rows.filter((r) => r.st !== 'ok' && r.a[7] === 'Parcial').length + '</span></div>' +
@@ -241,14 +273,14 @@ function iniciar(DADOS){
         '<div style="padding-left:16px">Caixa</div></div>' +
         rows.map((r) => { const a = r.a; return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px;background:' + tint[r.st] + ';opacity:' + (r.st === 'ok' ? .72 : 1) + '">' +
           '<div class="pf cond" style="padding-left:14px;font-size:' + (cp ? 21 : 25) + 'px">' + esc(a[0]) + '</div>' +
-          '<div style="font-size:' + fs + 'px;color:#c9d6ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">' + esc(a[1]) + '</div>' +
-          '<div style="display:flex;justify-content:center"><span style="' + (Number(a[3]) >= 3 ? 'background:#f2d33b;color:#1d1405;border-radius:6px;padding:0 9px;font-weight:700;font-size:17px' : 'color:#c9d6ea;font-size:17px') + '">' + esc(a[3]) + '</span></div>' +
+          '<div style="font-size:' + fs + 'px;color:var(--x-tx2b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">' + esc(a[1]) + '</div>' +
+          '<div style="display:flex;justify-content:center"><span style="' + (Number(a[3]) >= 3 ? 'background:#f2d33b;color:#1d1405;border-radius:6px;padding:0 9px;font-weight:700;font-size:17px' : 'color:var(--x-tx2b);font-size:17px') + '">' + esc(a[3]) + '</span></div>' +
           '<div style="font-size:' + fs + 'px;color:var(--tx2)">' + esc(a[4]) + '</div>' +
-          '<div style="text-align:right;padding-right:14px;font-size:18px;color:#c9d6ea">' + (a[2] ? fmt(a[2]) : '—') + '</div>' +
+          '<div style="text-align:right;padding-right:14px;font-size:18px;color:var(--x-tx2b)">' + (a[2] ? fmt(a[2]) : '—') + '</div>' +
           '<div class="cond" style="text-align:right;padding-right:14px;font-size:24px;font-weight:700;color:' + lastC[r.sk] + '">' + (a[9] != null && !a[6] ? fmt(a[9]) : '—') + '</div>' +
           '<div style="padding-left:14px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden"><span class="pill p-' + r.sk + '" style="min-width:92px;text-align:center;' + (cp ? 'font-size:13px;padding:1px 10px' : '') + '">' + r.sit + '</span><span style="font-size:15px;color:var(--tx2)">' + r.stx + '</span></div>' +
           V.dias.map((d, i) => '<div class="dcol" style="' + (i === today ? 'background:rgba(59,111,230,.10)' : '') + '">' + (i === a[5] ? '<span class="cell c-' + r.st + '">' + cellTxt[r.st] + '</span>' : '') + '</div>').join('') +
-          '<div style="padding-left:16px">' + (a[7] === 'Parcial' ? '<span style="background:rgba(224,165,46,.18);color:var(--amber2);border-radius:999px;padding:2px 10px;font-size:14px;font-weight:600">Parcial</span>' : '<span style="color:#8fa8cc;font-size:14px">' + esc(a[7]) + '</span>') + '</div>' +
+          '<div style="padding-left:16px">' + (a[7] === 'Parcial' ? '<span style="background:rgba(224,165,46,.18);color:var(--amber2);border-radius:999px;padding:2px 10px;font-size:14px;font-weight:600">Parcial</span>' : '<span style="color:var(--x-foot);font-size:14px">' + esc(a[7]) + '</span>') + '</div>' +
         '</div>'; }).join('') +
         '<div class="foot">' + esc(V.nota) + '</div></div>';
   }
@@ -258,8 +290,8 @@ function iniciar(DADOS){
   function renderProxima(){
     const X = DADOS.proxima;
     const TAG = {
-      parada: ['#b28cff', '#1a0f33', 'PARADA AGORA'], parcial: ['#e0a52e', '#1d1405', 'CAIXA PARCIAL'],
-      impl: ['#2c3e5c', '#dfe7f3', 'IMPLEMENTO'], aberta: ['#d93a3a', '#ffffff', 'OS ABERTA']
+      parada: ['var(--x-pur2)', 'var(--x-purbg3)', 'PARADA AGORA'], parcial: ['#e0a52e', '#1d1405', 'CAIXA PARCIAL'],
+      impl: ['#2c3e5c', 'var(--x-soft)', 'IMPLEMENTO'], aberta: ['#d93a3a', '#ffffff', 'OS ABERTA']
     };
     const tagHtml = (f) => {
       let t = TAG[f];
@@ -275,33 +307,33 @@ function iniciar(DADOS){
     const pend = itens.filter((it) => !it.feita);
     const k = (cls, lab, val, extra, st) => '<div class="k ' + cls + '" style="' + (st || '') + '"><span class="l">' + lab + '</span><span class="v cond">' + val + (extra ? '<span style="font-size:22px"> ' + extra + '</span>' : '') + '</span></div>';
     const lista = (titulo, cor, bg, sub, rows, line) => '<section style="background:' + bg + ';border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden">' +
-      '<h2 class="cond" style="margin:0;font-size:26px;font-weight:700;color:' + cor + '">' + titulo + '</h2>' + (sub ? '<span style="font-size:14px;color:#c9b8ea">' + sub + '</span>' : '') +
-      (rows.length ? rows.map((r) => '<div style="display:flex;align-items:baseline;gap:10px;border-top:1px solid ' + line + ';padding-top:6px"><span class="cond" style="font-weight:700;font-size:24px;width:92px;flex:none;white-space:nowrap">' + esc(r[0]) + '</span><span style="font-size:15px;color:#e6ecf5;flex:1">' + esc(r[1]) + '</span></div>').join('') : '<span style="font-size:15px;color:var(--tx3)">Nada para esta semana</span>') + '</section>';
+      '<h2 class="cond" style="margin:0;font-size:26px;font-weight:700;color:' + cor + '">' + titulo + '</h2>' + (sub ? '<span style="font-size:14px;color:var(--x-pur4)">' + sub + '</span>' : '') +
+      (rows.length ? rows.map((r) => '<div style="display:flex;align-items:baseline;gap:10px;border-top:1px solid ' + line + ';padding-top:6px"><span class="cond" style="font-weight:700;font-size:24px;width:92px;flex:none;white-space:nowrap">' + esc(r[0]) + '</span><span style="font-size:15px;color:var(--x-soft2);flex:1">' + esc(r[1]) + '</span></div>').join('') : '<span style="font-size:15px;color:var(--tx3)">Nada para esta semana</span>') + '</section>';
     $('s2').innerHTML =
       '<div class="kpis" style="grid-template-columns:1.25fr repeat(4,minmax(0,1fr)) 2.4fr">' +
         k('', 'Programadas na semana', itens.length, itens.filter((i) => i.feita).length ? '<span style="color:var(--green2)">· ' + itens.filter((i) => i.feita).length + ' já antecipadas</span>' : '') +
-        k('', 'Dia mais cheio', '<span style="color:#8fb2ff">' + X.dias[maxI][0] + '</span>', '<span style="color:#8fb2ff">· ' + porDia[maxI].length + '</span>', 'border:2px solid #8fb2ff') +
-        k('', '<span style="color:#f6e2b3">Separar peças</span>', '<span style="color:var(--amber2)">' + pend.filter((i) => i.caixa === 'Parcial').length + '</span>', '<span style="color:var(--amber2)">caixa parcial</span>', 'background:#3d2f12;border:2px solid var(--amber)') +
-        k('', '<span style="color:#d8c6ff">Aproveitar parada</span>', '<span style="color:#d4b8ff">' + pend.filter((i) => i.parada).length + '</span>', '', 'background:#241a3e;border:2px solid #b28cff') +
+        k('', 'Dia mais cheio', '<span style="color:var(--x-blue)">' + X.dias[maxI][0] + '</span>', '<span style="color:var(--x-blue)">· ' + porDia[maxI].length + '</span>', 'border:2px solid var(--x-blue)') +
+        k('', '<span style="color:var(--x-amblbl)">Separar peças</span>', '<span style="color:var(--amber2)">' + pend.filter((i) => i.caixa === 'Parcial').length + '</span>', '<span style="color:var(--amber2)">caixa parcial</span>', 'background:var(--x-ambbg);border:2px solid var(--amber)') +
+        k('', '<span style="color:var(--x-pur3)">Aproveitar parada</span>', '<span style="color:var(--x-pur1)">' + pend.filter((i) => i.parada).length + '</span>', '', 'background:var(--x-purbg1);border:2px solid var(--x-pur2)') +
         k('', 'Garantia · agendar', pend.filter((i) => i.gar).length, '') +
         '<div class="k" style="gap:2px"><span class="l" style="font-size:15px">Eficiência do mês por semana</span><div style="display:grid;grid-template-columns:repeat(' + X.mes.length + ',minmax(0,1fr));gap:12px;align-items:end">' +
-          X.mes.map((m) => '<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div style="display:flex;align-items:baseline;justify-content:space-between"><span class="cond" style="font-size:20px;font-weight:700;line-height:1">' + esc(m[0]) + '</span><span class="cond" style="font-size:24px;font-weight:700;color:' + m[4] + '">' + esc(m[1]) + '</span></div><div class="bar"><div style="width:' + m[3] + '%;background:' + m[4] + '"></div></div><span style="font-size:12px;color:#8fa8cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1">' + esc(m[2]) + '</span></div>').join('') +
+          X.mes.map((m) => '<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div style="display:flex;align-items:baseline;justify-content:space-between"><span class="cond" style="font-size:20px;font-weight:700;line-height:1">' + esc(m[0]) + '</span><span class="cond" style="font-size:24px;font-weight:700;color:' + m[4] + '">' + esc(m[1]) + '</span></div><div class="bar"><div style="width:' + m[3] + '%;background:' + m[4] + '"></div></div><span style="font-size:12px;color:var(--x-foot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1">' + esc(m[2]) + '</span></div>').join('') +
         '</div></div>' +
       '</div>' +
       '<div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:16px;min-height:0">' +
         '<section style="background:var(--card);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:' + X.dias.map((d, i) => porDia[i].length ? 'minmax(0,1fr)' : 'minmax(0,.55fr)').join(' ') + ';min-height:0">' +
           X.dias.map((d, i) => { const l = porDia[i], busy = l.length >= 6;
             return '<div style="border-left:' + (i ? '1px solid var(--line)' : 'none') + ';display:flex;flex-direction:column;min-width:0;min-height:0">' +
-              '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;background:' + (busy ? 'var(--today)' : 'var(--card2)') + ';color:' + (busy ? '#fff' : '#c9d6ea') + '"><span style="font-size:15px;font-weight:600;letter-spacing:.06em">' + d[0] + '</span><span class="cond" style="font-size:30px;font-weight:700;line-height:1">' + d[1] + '</span><span style="font-size:14px;opacity:.85">' + (l.length ? l.length + (l.length > 1 ? ' máquinas' : ' máquina') : 'sem programação') + '</span></div>' +
+              '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;background:' + (busy ? 'var(--today)' : 'var(--card2)') + ';color:' + (busy ? '#fff' : 'var(--x-tx2b)') + '"><span style="font-size:15px;font-weight:600;letter-spacing:.06em">' + d[0] + '</span><span class="cond" style="font-size:30px;font-weight:700;line-height:1">' + d[1] + '</span><span style="font-size:14px;opacity:.85">' + (l.length ? l.length + (l.length > 1 ? ' máquinas' : ' máquina') : 'sem programação') + '</span></div>' +
               '<div style="display:flex;flex-direction:column;gap:' + (l.length >= 7 ? 5 : 8) + 'px;padding:' + (l.length >= 7 ? '6px 6px' : '10px 8px') + ';overflow:hidden">' +
-              l.map((c) => { const cp = l.length >= 7; return '<div style="background:' + (c.feita ? 'rgba(31,122,71,.22)' : 'var(--card2)') + ';border:' + (c.parada ? '2px solid #b28cff' : c.caixa === 'Parcial' ? '2px solid var(--amber)' : '1px solid var(--line2)') + ';border-radius:10px;padding:' + (cp ? '4px 9px' : '7px 10px') + ';display:flex;flex-direction:column;gap:' + (cp ? 1 : 3) + 'px;opacity:' + (c.feita ? .75 : 1) + ';min-width:0">' +
+              l.map((c) => { const cp = l.length >= 7; return '<div style="background:' + (c.feita ? 'var(--x-donebg)' : 'var(--card2)') + ';border:' + (c.parada ? '2px solid var(--x-pur2)' : c.caixa === 'Parcial' ? '2px solid var(--amber)' : '1px solid var(--line2)') + ';border-radius:10px;padding:' + (cp ? '4px 9px' : '7px 10px') + ';display:flex;flex-direction:column;gap:' + (cp ? 1 : 3) + 'px;opacity:' + (c.feita ? .75 : 1) + ';min-width:0">' +
                 '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px"><span class="cond" style="font-weight:700;font-size:' + (cp ? 22 : 25) + 'px;white-space:nowrap;line-height:1.1">' + esc(c.pf) + '</span><span style="' + (Number(c.seq) >= 3 ? 'background:#f2d33b;color:#1d1405;border-radius:5px;padding:0 7px;font-weight:700' : 'color:var(--tx2)') + ';font-size:13px;white-space:nowrap">seq ' + esc(c.seq) + '</span></div>' +
                 '<span style="font-size:' + (cp ? 12 : 13) + 'px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.mod) + (c.os ? ' · OS ' + esc(c.os) : ' · sem OS') + '</span>' +
                 (c.fl.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px">' + c.fl.map(tagHtml).join('') + '</div>' : '') +
               '</div>'; }).join('') + '</div></div>'; }).join('') +
         '</section>' +
         '<div style="display:flex;flex-direction:column;gap:14px;min-height:0">' +
-          lista('APROVEITAR A PARADA', '#d4b8ff', '#241a3e', 'Máquinas paradas na oficina com preventiva na semana', X.aprov, '#3a2c5e') +
+          lista('APROVEITAR A PARADA', 'var(--x-pur1)', 'var(--x-purbg1)', 'Máquinas paradas na oficina com preventiva na semana', X.aprov, 'var(--x-purbg2)') +
           lista('SEPARAR PEÇAS · CAIXA PARCIAL', 'var(--amber2)', 'var(--card)', '', X.pecas, 'var(--line)') +
           lista('REVISAR NA PROGRAMAÇÃO', 'var(--red2)', 'var(--card)', '', X.revisar, 'var(--line)') +
         '</div>' +
@@ -328,6 +360,8 @@ function iniciar(DADOS){
   $('t0').onclick = () => go(0); $('t1').onclick = () => go(1); $('t2').onclick = () => go(2);
   $('pause').onclick = () => { paused = !paused; show(); };
   $('secs').onchange = (e) => { secs = Number(e.target.value) || 30; elapsed = 0; try { localStorage.setItem('painelTV.secs', String(secs)); } catch (er) {} show(); };
+  $('tema').value = temaEscolhido();
+  $('tema').onchange = (e) => { try { localStorage.setItem('painelTV.tema', e.target.value); } catch (er) {} aplicarTema(); };
   setInterval(() => { if (paused) return; elapsed++; if (elapsed >= secs) { elapsed = 0; screen = (screen + 1) % 3; } show(); }, 1000);
   show();
 
