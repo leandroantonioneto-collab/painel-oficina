@@ -74,21 +74,37 @@ def desmob_do_xlsx(caminho, hoje=None, dias=15):
     tz = datetime.timezone(datetime.timedelta(hours=-3))
     hoje = hoje or datetime.datetime.now(tz).date()
     fim = hoje + datetime.timedelta(days=dias)
-    ws = openpyxl.load_workbook(caminho, data_only=True)['Desmobilização']
+    wb = openpyxl.load_workbook(caminho, data_only=True)
+    grupos = {}  # prefixo -> grupo (aba Geral, ex.: 'CBM - CAMINHAO BASCULANTE MINERIO')
+    wg = wb['Geral']
+    cab_g = [c.value for c in wg[1]]
+    for r in wg.iter_rows(min_row=2, values_only=True):
+        if r[0] and dict(zip(cab_g, r)).get('Grupo'):
+            grupos[str(r[0]).strip()] = str(dict(zip(cab_g, r))['Grupo']).strip()
+    modelos = {}  # prefixo -> marca / modelo (abas Alugados e Próprios)
+    for aba in ('Alugados', 'Próprios'):
+        w = wb[aba]
+        cab = [c.value for c in w[1]]
+        for r in w.iter_rows(min_row=2, values_only=True):
+            if r[0]:
+                mm = dict(zip(cab, r)).get('Marca / modelo')
+                if mm and not str(mm).strip().lower().startswith(('não consta', 'nao consta')):
+                    modelos[str(r[0]).strip()] = str(mm).strip()
     sel = []
-    for r in list(ws.iter_rows(values_only=True))[1:]:
+    for r in list(wb['Desmobilização'].iter_rows(values_only=True))[1:]:
         tipo, pref, fam, st, prev, _, obs = (list(r) + [None] * 7)[:7]
         if st != 'Programado' or not prev:
             continue
         p = str(prev).strip().split('/')
         d = datetime.date(int(p[2]), int(p[1]), int(p[0]))
         if hoje <= d <= fim:
-            sel.append((d, pref, fam or '', tipo or '', obs or ''))
+            chave = str(pref).strip()
+            sel.append((d, pref, grupos.get(chave) or fam or '', tipo or '', obs or '', modelos.get(chave, '')))
     sel.sort(key=lambda x: (x[0], x[1]))
     return {
         'janela': hoje.strftime('%d/%m/%Y') + ' a ' + fim.strftime('%d/%m/%Y'),
         'fonte': os.path.basename(caminho) + ' · aba Desmobilização · status Programado · gerado em ' + datetime.datetime.now(tz).strftime('%d/%m/%Y %H:%M'),
-        'linhas': [[pf, fa, ti, d.strftime('%d/%m/%Y'), ob] for d, pf, fa, ti, ob in sel],
+        'linhas': [[pf, fa, ti, d.strftime('%d/%m/%Y'), ob, md] for d, pf, fa, ti, ob, md in sel],
     }
 
 
