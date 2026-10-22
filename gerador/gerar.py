@@ -21,6 +21,11 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import extrai_maqpar
 import extrai_prev
 
+try:
+    import openpyxl
+except ImportError:  # só necessário com --desmob
+    openpyxl = None
+
 AQUI = pathlib.Path(__file__).parent
 
 
@@ -62,6 +67,31 @@ def fontes_css():
     return ''.join(faces)
 
 
+def desmob_do_xlsx(caminho, hoje=None, dias=15):
+    """Equipamentos com status Programado e data prevista entre hoje e hoje+dias (aba Desmobilização)."""
+    if openpyxl is None:
+        raise SystemExit('instale openpyxl: pip install openpyxl')
+    tz = datetime.timezone(datetime.timedelta(hours=-3))
+    hoje = hoje or datetime.datetime.now(tz).date()
+    fim = hoje + datetime.timedelta(days=dias)
+    ws = openpyxl.load_workbook(caminho, data_only=True)['Desmobilização']
+    sel = []
+    for r in list(ws.iter_rows(values_only=True))[1:]:
+        tipo, pref, fam, st, prev, _, obs = (list(r) + [None] * 7)[:7]
+        if st != 'Programado' or not prev:
+            continue
+        p = str(prev).strip().split('/')
+        d = datetime.date(int(p[2]), int(p[1]), int(p[0]))
+        if hoje <= d <= fim:
+            sel.append((d, pref, fam or '', tipo or '', obs or ''))
+    sel.sort(key=lambda x: (x[0], x[1]))
+    return {
+        'janela': hoje.strftime('%d/%m/%Y') + ' a ' + fim.strftime('%d/%m/%Y'),
+        'fonte': os.path.basename(caminho) + ' · aba Desmobilização · status Programado · gerado em ' + datetime.datetime.now(tz).strftime('%d/%m/%Y %H:%M'),
+        'linhas': [[pf, fa, ti, d.strftime('%d/%m/%Y'), ob] for d, pf, fa, ti, ob in sel],
+    }
+
+
 def cifrar(dados, senha):
     pt = json.dumps(dados, ensure_ascii=False).encode()
     salt, iv, it = os.urandom(16), os.urandom(12), 250000
@@ -78,6 +108,7 @@ def main():
     ap.add_argument('--horimetro', help='PDF com a camada ULTIMO HORIMETRO (opcional)')
     ap.add_argument('--config', required=True)
     ap.add_argument('--saida', required=True)
+    ap.add_argument('--desmob', help='planilha Controle_Frota_421.xlsx (aba Desmobilização, opcional)')
     a = ap.parse_args()
     cfg = json.load(open(a.config, encoding='utf-8'))
 
@@ -112,6 +143,9 @@ def main():
         },
         'preventivaMes': prev,
     }
+    if a.desmob:
+        dados['desmob'] = desmob_do_xlsx(a.desmob)
+        print('desmobilização:', len(dados['desmob']['linhas']), 'equipamentos na janela')
     html = (AQUI / 'painel_modelo.html').read_text(encoding='utf-8')
     html = html.replace('/*FONTS*/', fontes_css()).replace('/*DADOS_ENC*/null', cifrar(dados, cfg['senha']))
     pathlib.Path(a.saida).write_text(html, encoding='utf-8')

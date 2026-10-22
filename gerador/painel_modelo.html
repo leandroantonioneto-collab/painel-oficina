@@ -96,8 +96,9 @@ aplicarTema(); setInterval(aplicarTema, 60000);
   <div class="screen" id="s0"></div>
   <div class="screen" id="s1" style="display:none"></div>
   <div class="screen" id="s2" style="display:none"></div>
+  <div class="screen" id="s3" style="display:none"></div>
   <div class="bottom">
-    <div style="display:flex;gap:10px"><button class="btn" id="t0" type="button">1 · Máquinas paradas</button><button class="btn" id="t1" type="button">2 · Preventiva da semana</button><button class="btn" id="t2" type="button">3 · Preventiva - Próxima semana</button></div>
+    <div style="display:flex;gap:10px"><button class="btn" id="t0" type="button">1 · Máquinas paradas</button><button class="btn" id="t1" type="button">2 · Preventiva da semana</button><button class="btn" id="t2" type="button">3 · Preventiva - Próxima semana</button><button class="btn" id="t3" type="button">4 · Desmobilização · 15 dias</button></div>
     <div class="prog"><div class="bar" style="flex:1"><div id="pbar" style="width:0"></div></div><span class="muted" style="font-size:17px;width:190px;white-space:nowrap" id="rest"></span></div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="btn" id="pause" type="button" style="min-width:130px">Pausar</button>
@@ -340,7 +341,39 @@ function iniciar(DADOS){
       '</div>';
   }
 
-  renderParadas(); renderPrev(); renderProxima();
+  renderParadas(); renderPrev(); renderProxima(); renderDesmob();
+
+
+  // ===== DESMOBILIZAÇÃO · PRÓXIMOS 15 DIAS =====
+  function renderDesmob(){
+    const D = DADOS.desmob;
+    if (!D) { $('s3').innerHTML = '<div class="k"><span class="l">Sem dados de desmobilização</span></div>'; return; }
+    const L = D.linhas, n = L.length;
+    const porDia = {}; L.forEach((l) => { porDia[l[3]] = (porDia[l[3]] || 0) + 1; });
+    const dias = Object.keys(porDia).sort((a, b) => parseDM(a) - parseDM(b));
+    const proprios = L.filter((l) => l[2] === 'Próprio').length, alugados = n - proprios;
+    const maxDia = dias.reduce((m, d) => Math.max(m, porDia[d]), 0);
+    const pico = dias.find((d) => porDia[d] === maxDia) || '—';
+    const cols = '220px 280px 130px 150px minmax(0,1fr)';
+    const rowH = Math.max(34, Math.min(52, Math.floor(620 / Math.max(n, 1))));
+    $('s3').innerHTML =
+      '<div class="kpis" style="grid-template-columns:1.6fr repeat(4,minmax(0,1fr))">' +
+        '<div class="k big"><span class="v cond">' + n + '</span><span class="l" style="font-size:20px;color:var(--tx2)">programados para desmobilização<br>' + esc(D.janela) + '</span></div>' +
+        '<div class="k"><span class="l">Próprios</span><span class="v cond">' + proprios + '</span></div>' +
+        '<div class="k"><span class="l">Alugados</span><span class="v cond">' + alugados + '</span></div>' +
+        '<div class="k"><span class="l">Dias com saída</span><span class="v cond">' + dias.length + '</span></div>' +
+        '<div class="k"><span class="l">Pico no dia</span><span class="v cond">' + maxDia + '<span style="font-size:24px;color:var(--tx2)"> em ' + esc(pico) + '</span></span></div>' +
+      '</div>' +
+      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>Família</div><div>Tipo</div><div>Data prevista</div><div>Observação</div></div>' +
+        (n ? L.map((l) => '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
+          '<div style="padding-left:14px"><span class="pf cond" style="font-size:28px">' + esc(l[0]) + '</span></div>' +
+          '<div style="font-size:16px;color:var(--tx2)">' + esc(l[1]) + '</div>' +
+          '<div style="font-size:16px;color:var(--x-soft)">' + esc(l[2]) + '</div>' +
+          '<div class="cond" style="font-size:24px;font-weight:600;padding-left:4px">' + esc(l[3]) + '</div>' +
+          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:var(--x-soft)">' + esc(l[4]) + '</div>' +
+        '</div>').join('') : '<div style="padding:30px;font-size:22px;color:var(--tx2)">Nenhum equipamento programado para desmobilização nesta janela.</div>') +
+        '<div class="foot">Fonte: ' + esc(D.fonte) + '</div></div>';
+  }
 
   // ===== ROTAÇÃO =====
   let screen = 0, elapsed = 0, paused = false, secs = 30;
@@ -350,19 +383,20 @@ function iniciar(DADOS){
     $('s0').style.display = screen === 0 ? 'flex' : 'none';
     $('s1').style.display = screen === 1 ? 'flex' : 'none';
     $('s2').style.display = screen === 2 ? 'flex' : 'none';
-    $('t0').classList.toggle('on', screen === 0); $('t1').classList.toggle('on', screen === 1); $('t2').classList.toggle('on', screen === 2);
-    $('chip').textContent = screen === 0 ? 'MÁQUINAS PARADAS · ' + DADOS.obra : screen === 1 ? 'PREVENTIVA · ' + DADOS.preventiva.titulo : 'PREVENTIVA - PRÓXIMA SEMANA · ' + DADOS.proxima.titulo;
+    $('s3').style.display = screen === 3 ? 'flex' : 'none';
+    $('t0').classList.toggle('on', screen === 0); $('t1').classList.toggle('on', screen === 1); $('t2').classList.toggle('on', screen === 2); $('t3').classList.toggle('on', screen === 3);
+    $('chip').textContent = screen === 0 ? 'MÁQUINAS PARADAS · ' + DADOS.obra : screen === 1 ? 'PREVENTIVA · ' + DADOS.preventiva.titulo : screen === 2 ? 'PREVENTIVA - PRÓXIMA SEMANA · ' + DADOS.proxima.titulo : 'DESMOBILIZAÇÃO · PRÓXIMOS 15 DIAS';
     $('pbar').style.width = (elapsed / secs * 100) + '%';
     $('rest').textContent = paused ? 'Pausado' : 'Próxima tela em ' + Math.max(0, secs - elapsed) + ' s';
     $('pause').textContent = paused ? 'Continuar' : 'Pausar';
   }
   const go = (i) => { screen = i; elapsed = 0; show(); };
-  $('t0').onclick = () => go(0); $('t1').onclick = () => go(1); $('t2').onclick = () => go(2);
+  $('t0').onclick = () => go(0); $('t1').onclick = () => go(1); $('t2').onclick = () => go(2); $('t3').onclick = () => go(3);
   $('pause').onclick = () => { paused = !paused; show(); };
   $('secs').onchange = (e) => { secs = Number(e.target.value) || 30; elapsed = 0; try { localStorage.setItem('painelTV.secs', String(secs)); } catch (er) {} show(); };
   $('tema').value = temaEscolhido();
   $('tema').onchange = (e) => { try { localStorage.setItem('painelTV.tema', e.target.value); } catch (er) {} aplicarTema(); };
-  setInterval(() => { if (paused) return; elapsed++; if (elapsed >= secs) { elapsed = 0; screen = (screen + 1) % 3; } show(); }, 1000);
+  setInterval(() => { if (paused) return; elapsed++; if (elapsed >= secs) { elapsed = 0; screen = (screen + 1) % 4; } show(); }, 1000);
   show();
 
   // recarrega a página a cada 10 min para pegar a versão nova do arquivo
