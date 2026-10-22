@@ -344,34 +344,54 @@ function iniciar(DADOS){
   renderParadas(); renderPrev(); renderProxima(); renderDesmob();
 
 
-  // ===== DESMOBILIZAÇÃO · PRÓXIMOS 15 DIAS =====
+  // ===== DESMOBILIZAÇÃO · PRÓXIMOS 15 DIAS (v2) =====
   function renderDesmob(){
     const D = DADOS.desmob;
     if (!D) { $('s3').innerHTML = '<div class="k"><span class="l">Sem dados de desmobilização</span></div>'; return; }
-    const L = D.linhas, n = L.length;
-    const porDia = {}; L.forEach((l) => { porDia[l[3]] = (porDia[l[3]] || 0) + 1; });
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const L = D.linhas.map((l) => {
+      const dt = parseDM(l[3]), dias = Math.round((dt - hoje) / 864e5);
+      const dest = l[2] === 'Alugado' ? 'Devolver ao fornecedor' : ((l[4].match(/destino\s+([^\s|·]+)/i) || [])[1] || '');
+      return { l, dt, dias, dest };
+    });
+    const n = L.length, prox3 = L.filter((x) => x.dias <= 3).length;
+    const proprios = L.filter((x) => x.l[2] === 'Próprio').length, alugados = n - proprios;
+    const porDia = {}; L.forEach((x) => { porDia[x.l[3]] = (porDia[x.l[3]] || 0) + 1; });
     const dias = Object.keys(porDia).sort((a, b) => parseDM(a) - parseDM(b));
-    const proprios = L.filter((l) => l[2] === 'Próprio').length, alugados = n - proprios;
     const maxDia = dias.reduce((m, d) => Math.max(m, porDia[d]), 0);
     const pico = dias.find((d) => porDia[d] === maxDia) || '—';
-    const cols = '220px 280px 130px 150px minmax(0,1fr)';
-    const rowH = Math.max(34, Math.min(52, Math.floor(620 / Math.max(n, 1))));
+    const destinos = {}; L.forEach((x) => { if (x.dest) destinos[x.dest] = (destinos[x.dest] || 0) + 1; });
+    const dstTxt = Object.keys(destinos).map((k) => k + ' ' + destinos[k]).join(' · ') || 'Não informado';
+    const primeiro = dias[0] || '—';
+    const labC = { red: 'var(--x-red)', green: 'var(--x-green)', gray: 'var(--x-tx2b)', amber: 'var(--x-amber)' };
+    const cols = '210px 110px 130px 90px 160px 230px minmax(0,1fr)';
+    const rowH = Math.max(34, Math.min(52, Math.floor(600 / Math.max(n, 1))));
+    const dcls = (d) => d <= 3 ? 'd30' : d <= 7 ? 'd15' : 'd8';
+    const sitOf = (d) => d < 0 ? ['venc', 'Vencida'] : d === 0 ? ['hoje', 'Hoje'] : d <= 3 ? ['venc', 'Faltam ' + d + ' d'] : ['ok', 'Faltam ' + d + ' d'];
     $('s3').innerHTML =
       '<div class="kpis" style="grid-template-columns:1.6fr repeat(4,minmax(0,1fr))">' +
-        '<div class="k big"><span class="v cond">' + n + '</span><span class="l" style="font-size:20px;color:var(--tx2)">programados para desmobilização<br>' + esc(D.janela) + '</span></div>' +
+        '<div class="k big"><span class="v cond">' + n + '</span><span class="l" style="font-size:20px;color:var(--tx2)">equipamentos programados<br>' + esc(D.janela) + '</span></div>' +
+        '<div class="k red"><span class="l">Saem em até 3 dias</span><span class="v cond" style="color:var(--red2)">' + prox3 + '<span style="font-size:22px;color:var(--amber2)"> · próxima ' + esc(primeiro) + '</span></span></div>' +
+        '<div class="k"><span class="l">Pico no dia</span><span class="v cond">' + maxDia + '<span style="font-size:24px;color:var(--tx2)"> em ' + esc(pico) + '</span></span></div>' +
         '<div class="k"><span class="l">Próprios</span><span class="v cond">' + proprios + '</span></div>' +
         '<div class="k"><span class="l">Alugados</span><span class="v cond">' + alugados + '</span></div>' +
-        '<div class="k"><span class="l">Dias com saída</span><span class="v cond">' + dias.length + '</span></div>' +
-        '<div class="k"><span class="l">Pico no dia</span><span class="v cond">' + maxDia + '<span style="font-size:24px;color:var(--tx2)"> em ' + esc(pico) + '</span></span></div>' +
       '</div>' +
-      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>Família</div><div>Tipo</div><div>Data prevista</div><div>Observação</div></div>' +
-        (n ? L.map((l) => '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
-          '<div style="padding-left:14px"><span class="pf cond" style="font-size:28px">' + esc(l[0]) + '</span></div>' +
-          '<div style="font-size:16px;color:var(--tx2)">' + esc(l[1]) + '</div>' +
-          '<div style="font-size:16px;color:var(--x-soft)">' + esc(l[2]) + '</div>' +
-          '<div class="cond" style="font-size:24px;font-weight:600;padding-left:4px">' + esc(l[3]) + '</div>' +
-          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:var(--x-soft)">' + esc(l[4]) + '</div>' +
-        '</div>').join('') : '<div style="padding:30px;font-size:22px;color:var(--tx2)">Nenhum equipamento programado para desmobilização nesta janela.</div>') +
+      '<div class="infos"><div class="h cond">DESMOBILIZAÇÃO</div>' +
+        '<div class="i"><b style="color:var(--x-green)">DIAS COM SAÍDA</b><span class="clamp">' + dias.length + ' datas · ' + dias.map((d) => d.slice(0, 5) + ' (' + porDia[d] + ')').join(' · ') + '</span></div>' +
+        '<div class="i"><b style="color:var(--x-amber)">DESTINOS</b><span class="clamp">' + esc(dstTxt) + '</span></div>' +
+        '<div class="i"><b style="color:var(--x-tx2b)">FONTE</b><span class="clamp">Controle de Frota · status Programado</span></div>' +
+        '<div class="i"><b style="color:var(--x-tx2b)">ATUALIZADO</b><span class="clamp">' + esc(D.fonte.split(' gerado em ')[1] || '') + '</span></div>' +
+      '</div>' +
+      '<div class="tbl"><div class="row hd" style="grid-template-columns:' + cols + '"><div style="padding-left:14px">Equipamento</div><div>Tipo</div><div>Data prevista</div><div style="text-align:center">Dias</div><div>Situação</div><div>Destino</div><div>Observação</div></div>' +
+        (n ? L.map((x) => { const s = sitOf(x.dias); return '<div class="row" style="grid-template-columns:' + cols + ';height:' + rowH + 'px">' +
+          '<div style="padding-left:14px;display:flex;flex-direction:column;line-height:1.05;min-width:0"><span class="pf cond" style="font-size:28px">' + esc(x.l[0]) + '</span><span style="font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.l[1]) + '</span></div>' +
+          '<div style="font-size:16px;color:var(--x-soft)">' + esc(x.l[2]) + '</div>' +
+          '<div class="cond" style="font-size:24px;font-weight:600">' + esc(x.l[3]) + '</div>' +
+          '<div style="display:flex;justify-content:center"><span class="dbox cond ' + dcls(x.dias) + '">' + Math.max(x.dias, 0) + '</span></div>' +
+          '<div><span class="pill p-' + s[0] + '">' + s[1] + '</span></div>' +
+          '<div style="font-size:18px;font-weight:600;color:' + (x.dest ? 'var(--x-strong)' : 'var(--x-tx2b)') + ';padding-left:4px">' + esc(x.dest || '—') + '</div>' +
+          '<div class="clamp" style="padding:0 16px;font-size:15px;line-height:1.25;color:var(--x-soft)">' + esc(x.l[4]) + '</div>' +
+        '</div>'; }).join('') : '<div style="padding:30px;font-size:22px;color:var(--tx2)">Nenhum equipamento programado para desmobilização nesta janela.</div>') +
         '<div class="foot">Fonte: ' + esc(D.fonte) + '</div></div>';
   }
 
