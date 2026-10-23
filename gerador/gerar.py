@@ -132,10 +132,17 @@ def main():
     ref = ddmm(mq['dataRelatorio'])
     prev = extrai_prev.ler(a.preventiva)
     prev['terceiros'] = cfg.get('terceiros', '8/8 OK')
+    # formato novo: coluna 'ULTIMO ABASTECIMENTO' já vem na própria planilha (it[10])
+    md = re.search(r'(\d\d)[-.](\d\d)', os.path.basename(a.preventiva))
+    data_ab = '%s/%s' % md.groups() if md else datetime.datetime.fromtimestamp(os.path.getmtime(a.preventiva)).strftime('%d/%m')
+    for sem in prev['semanas']:
+        if sem.pop('abast', False):
+            sem['horimetroData'] = data_ab
+            print('abastecimento semana', sem['n'], ':', sum(it[10] is not None for it in sem['itens']), 'leituras (planilha de', data_ab + ')')
     if a.horimetro:
         for n, h in extrai_prev.ler_horimetros(a.horimetro).items():
             for sem in prev['semanas']:
-                if sem['n'] == n:
+                if sem['n'] == n and 'horimetroData' not in sem:
                     if len(h['valores']) == len(sem['itens']):
                         for it, v in zip(sem['itens'], h['valores']):
                             it.append(v)

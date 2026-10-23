@@ -1,7 +1,8 @@
 """Lê o PDF da programação de preventiva (PROJ. PREVENTIVA ...) e devolve as semanas do mês.
 
 Uso: python3 extrai_prev.py PREVENTIVA.pdf saida.json
-Cada item: [prefixo, modelo, horimetro, seq, os, indiceDia, realizada, caixa, obs, itemFaltante]
+Cada item: [prefixo, modelo, horimetro, seq, os, indiceDia, realizada, caixa, obs, itemFaltante(, ultimoAbastecimento)]
+O último elemento só existe quando o PDF tem a coluna 'ULTIMO ABASTECIMENTO' (formato a partir de 23/10/2026).
 """
 import datetime
 import json
@@ -36,6 +37,9 @@ def ler(src):
                 ds = [w for w in ws if re.fullmatch(r'\d\d/\d\d/\d{4}', w['text'])]
                 if 'PREFIXO' in txt and ds and cur:
                     cur['cols'] = [(w['x0'] + w['x1']) / 2 for w in ds]
+                    ex = [w for w in ws if w['text'] == 'EXECUÇÃO']
+                    sq = [w for w in ws if w['text'] == 'SEQ']
+                    cur['band'] = (ex[0]['x0'] - 8, ex[0]['x1'] + 8, sq[0]['x0'] - 4) if ex and sq else None
                     cur['dias'] = []
                     for w in ds:
                         d = datetime.date(int(w['text'][6:]), int(w['text'][3:5]), int(w['text'][:2]))
@@ -48,11 +52,26 @@ def ler(src):
                 cx = cur['cols']
                 lo, hi = cx[0] - 30, cx[-1] + 30
                 pf = ws[0]['text'] + ' ' + ws[1]['text']
-                lt = [w['text'] for w in ws[2:] if (w['x0'] + w['x1']) / 2 < lo]
-                rt = [w['text'] for w in ws if (w['x0'] + w['x1']) / 2 > hi]
-                os_ = lt.pop() if lt and re.fullmatch(r'00\d{4}', lt[-1]) else ''
-                mm = re.match(r'(.*?)\s+(\S+)\s+(\d(?: ou \d)?)$', ' '.join(lt))
-                mod, hor, seq = (mm.group(1), mm.group(2), mm.group(3)) if mm else (' '.join(lt), '', '')
+                ctr = lambda w: (w['x0'] + w['x1']) / 2
+                lw = [w for w in ws[2:] if ctr(w) < lo]
+                lt = [w['text'] for w in lw]
+                rt = [w['text'] for w in ws if ctr(w) > hi]
+                ab = None
+                if cur.get('band'):
+                    # separa pelas colunas do cabeçalho: MODELO | HORIMETRO MANUTENÇÃO | ULTIMO ABASTECIMENTO | SEQ OS
+                    h0, h1, s0 = cur['band']
+                    mod = ' '.join(w['text'] for w in lw if ctr(w) < h0)
+                    hor = ' '.join(w['text'] for w in lw if h0 <= ctr(w) <= h1)
+                    abt = ' '.join(w['text'] for w in lw if h1 < ctr(w) < s0)
+                    dir_ = [w['text'] for w in lw if ctr(w) >= s0]
+                    os_ = next((t for t in dir_ if re.fullmatch(r'00\d{4}', t)), '')
+                    seq = ' '.join(t for t in dir_ if re.fullmatch(r'\d|ou', t))
+                    if re.fullmatch(r'[\d.]+', abt):
+                        ab = int(abt.replace('.', ''))
+                else:
+                    os_ = lt.pop() if lt and re.fullmatch(r'00\d{4}', lt[-1]) else ''
+                    mm = re.match(r'(.*?)\s+(\S+)\s+(\d(?: ou \d)?)$', ' '.join(lt))
+                    mod, hor, seq = (mm.group(1), mm.group(2), mm.group(3)) if mm else (' '.join(lt), '', '')
                 if re.fullmatch(r'\d\d/\d\d/\d{4}', hor):
                     hor = ''
                 caixa, obs, falta = '', rt, []
@@ -70,14 +89,19 @@ def ler(src):
                     feita = 1 if cand[0]['text'] == 'V' else 0
                 elif re.search(r'(EXECUTADO|REALIZADO) EM', obs):
                     feita = 1
-                cur['itens'].append([pf, mod, hor, seq, os_, dia, feita, caixa, obs, ' '.join(falta)])
+                cur['itens'].append([pf, mod, hor, seq, os_, dia, feita, caixa, obs, ' '.join(falta), ab])
+    for w in weeks:
+        w['abast'] = any(it[10] is not None for it in w['itens'])
+        if not w['abast']:
+            for it in w['itens']:
+                it.pop()
     res = {'semanas': []}
     for w in weeks:
         d = w['dias']
         if not d:
             continue
         res['semanas'].append({'n': w['n'], 'titulo': '%s SEMANA %d · %s A %s' % (w['mes'], w['n'], d[0][1][:2], d[-1][1]),
-                               'dias': d, 'itens': w['itens']})
+                               'dias': d, 'itens': w['itens'], 'abast': w['abast']})
     return res
 
 
