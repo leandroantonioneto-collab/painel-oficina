@@ -14,11 +14,40 @@ import pdfplumber
 WD = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 
 
+_DT = re.compile(r'\d\d/\d\d/\d{4}')
+
+
+def _palavras(pg):
+    """extract_words, separando datas que vêm coladas numa só palavra
+    (ex.: 'ABASTECIME25/10/202626/10/2026...' no PDF de 26/10)."""
+    out = []
+    for w in pg.extract_words(return_chars=True):
+        t, ch = w['text'], w.get('chars') or []
+        ms = list(_DT.finditer(t))
+        if len(ch) != len(t) or not ms or (len(ms) == 1 and ms[0].span() == (0, len(t))):
+            w.pop('chars', None)
+            out.append(w)
+            continue
+        cuts, pos = [], 0
+        for m in ms:
+            if m.start() > pos:
+                cuts.append((pos, m.start()))
+            cuts.append(m.span())
+            pos = m.end()
+        if pos < len(t):
+            cuts.append((pos, len(t)))
+        for a, b in cuts:
+            cs = ch[a:b]
+            out.append({'text': t[a:b], 'x0': min(c['x0'] for c in cs), 'x1': max(c['x1'] for c in cs),
+                        'top': min(c['top'] for c in cs), 'bottom': max(c['bottom'] for c in cs)})
+    return out
+
+
 def ler(src):
     weeks, cur = [], None
     with pdfplumber.open(src) as p:
         for pg in p.pages:
-            words = pg.extract_words()
+            words = _palavras(pg)
             lines = []
             for w in sorted(words, key=lambda w: (round(w['top']), w['x0'])):
                 if lines and abs(lines[-1]['top'] - w['top']) < 3:
@@ -50,7 +79,9 @@ def ler(src):
                 if not (len(ws) >= 2 and re.fullmatch(r'[A-Z]{2,4}', ws[0]['text']) and re.fullmatch(r'\d{4}', ws[1]['text']) and ws[0]['x0'] < 60):
                     continue
                 cx = cur['cols']
-                lo, hi = cx[0] - 30, cx[-1] + 30
+                pc = cx[1] - cx[0] if len(cx) > 1 else 99
+                mg = 30 if pc >= 30 else pc * 0.6  # PDF retrato (26/10) tem colunas estreitas
+                lo, hi = cx[0] - mg, cx[-1] + mg
                 pf = ws[0]['text'] + ' ' + ws[1]['text']
                 ctr = lambda w: (w['x0'] + w['x1']) / 2
                 lw = [w for w in ws[2:] if ctr(w) < lo]
@@ -66,6 +97,10 @@ def ler(src):
                     dir_ = [w['text'] for w in lw if ctr(w) >= s0]
                     os_ = next((t for t in dir_ if re.fullmatch(r'00\d{4}', t)), '')
                     seq = ' '.join(t for t in dir_ if re.fullmatch(r'\d|ou', t))
+                    if not abt:
+                        # formato de 26/10: ULTIMO ABASTECIMENTO vem depois de SEQ/OS
+                        resto = [t for t in dir_ if not re.fullmatch(r'\d|ou', t) and t != os_]
+                        abt = resto[0] if len(resto) == 1 else ''
                     if re.fullmatch(r'[\d.]+', abt):
                         ab = int(abt.replace('.', ''))
                 else:
@@ -84,9 +119,10 @@ def ler(src):
                 cand = [k for k in marks if abs(k['top'] - L['top']) < 6 and lo < (k['x0'] + k['x1']) / 2 < hi]
                 dia, feita = None, 0
                 if cand:
-                    c = (cand[0]['x0'] + cand[0]['x1']) / 2
+                    k = min(cand, key=lambda k: abs(k['top'] - L['top']))  # linhas apertadas: pega a marca mais próxima
+                    c = (k['x0'] + k['x1']) / 2
                     dia = min(range(len(cx)), key=lambda i: abs(cx[i] - c))
-                    feita = 1 if cand[0]['text'] == 'V' else 0
+                    feita = 1 if k['text'] == 'V' else 0
                 elif re.search(r'(EXECUTADO|REALIZADO) EM', obs):
                     feita = 1
                 cur['itens'].append([pf, mod, hor, seq, os_, dia, feita, caixa, obs, ' '.join(falta), ab])
