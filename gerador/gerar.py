@@ -108,6 +108,46 @@ def desmob_do_xlsx(caminho, hoje=None, dias=15):
     }
 
 
+def ler_abastecimento(caminho):
+    """Último registro (data/hora) com leitura de cada equipamento: {prefixo: {'Hora': x, 'KM': y}}."""
+    import csv
+    ult, maxd = {}, None
+    with open(caminho, encoding='utf-8-sig', newline='') as f:
+        for r in csv.DictReader(f, delimiter=';'):
+            pf = (r.get('Equipe') or '').strip()
+            if not pf:
+                continue
+            try:
+                quando = datetime.datetime.strptime(r['dataabastecimento'] + ' ' + (r.get('hora') or '00:00:00'), '%d/%m/%Y %H:%M:%S')
+            except ValueError:
+                continue
+            maxd = max(maxd, quando) if maxd else quando
+            for campo in ('Hora', 'KM'):
+                try:
+                    v = float(str(r.get(campo) or '').replace('.', '').replace(',', '.'))
+                except ValueError:
+                    continue
+                if v > 0 and (campo not in ult.setdefault(pf, {}) or quando >= ult[pf][campo][0]):
+                    ult[pf][campo] = (quando, v)
+    return ult, (maxd.strftime('%d/%m') if maxd else '')
+
+
+def escolhe_leitura(leituras, previsto):
+    """Escolhe horímetro ou km conforme a escala do horímetro previsto da preventiva."""
+    import math
+    if not leituras:
+        return None
+    try:
+        alvo = float(str(previsto).replace('.', '').replace(',', '.'))
+    except ValueError:
+        alvo = 0
+    vals = [v for _, v in leituras.values()]
+    if alvo <= 0:
+        return leituras.get('Hora', (0, vals[0]))[1]
+    v = min(vals, key=lambda x: abs(math.log(x / alvo)))
+    return int(v) if v == int(v) else v
+
+
 def cifrar(dados, senha):
     pt = json.dumps(dados, ensure_ascii=False).encode()
     salt, iv, it = os.urandom(16), os.urandom(12), 250000
@@ -122,6 +162,7 @@ def main():
     ap.add_argument('--maqpar', required=True)
     ap.add_argument('--preventiva', required=True)
     ap.add_argument('--proxima', help='PDF da programação do mês seguinte (opcional; usado na tela Próxima semana quando a semana atual é a última do mês)')
+    ap.add_argument('--abastecimento', help='CSV de abastecimento (Gestão Visual); preenche o último horímetro/km de cada equipamento')
     ap.add_argument('--horimetro', help='PDF com a camada ULTIMO HORIMETRO (opcional)')
     ap.add_argument('--config', required=True)
     ap.add_argument('--saida', required=True)
@@ -140,7 +181,24 @@ def main():
         if sem.pop('abast', False):
             sem['horimetroData'] = data_ab
             print('abastecimento semana', sem['n'], ':', sum(it[10] is not None for it in sem['itens']), 'leituras (planilha de', data_ab + ')')
-    if a.horimetro:
+    if a.proxima:
+        seg = extrai_prev.ler(a.proxima)['semanas']
+        prev['seguinte'] = [w for w in seg if w['itens']]
+        print('mês seguinte:', len(prev['seguinte']), 'semanas ·', sum(len(w['itens']) for w in prev['seguinte']), 'preventivas (' + os.path.basename(a.proxima) + ')')
+
+    if a.abastecimento:
+        ult, data_csv = ler_abastecimento(a.abastecimento)
+        for sem in prev['semanas'] + prev.get('seguinte', []):
+            n = 0
+            for it in sem['itens']:
+                v = escolhe_leitura(ult.get(it[0]), it[2])
+                while len(it) < 11:
+                    it.append(None)
+                it[10] = v
+                n += v is not None
+            sem['horimetroData'] = data_csv
+            print('abastecimento semana', sem['titulo'], ':', n, 'de', len(sem['itens']), 'leituras (CSV até', data_csv + ')')
+    if a.horimetro and not a.abastecimento:
         for n, h in extrai_prev.ler_horimetros(a.horimetro).items():
             for sem in prev['semanas']:
                 if sem['n'] == n and 'horimetroData' not in sem:
@@ -151,11 +209,6 @@ def main():
                         print('horimetro semana', n, ':', sum(v is not None for v in h['valores']), 'leituras de', h['data'])
                     else:
                         print('AVISO horimetro semana', n, ': linhas nao batem', len(h['valores']), 'x', len(sem['itens']))
-
-    if a.proxima:
-        seg = extrai_prev.ler(a.proxima)['semanas']
-        prev['seguinte'] = [w for w in seg if w['itens']]
-        print('mês seguinte:', len(prev['seguinte']), 'semanas ·', sum(len(w['itens']) for w in prev['seguinte']), 'preventivas (' + os.path.basename(a.proxima) + ')')
 
     agora = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3)))
     dados = {

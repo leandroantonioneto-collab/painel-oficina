@@ -14,6 +14,7 @@ Monta o `index.html` publicado no GitHub Pages a partir de três arquivos que fi
 pip install pdfplumber cryptography
 python3 gerar.py --maqpar MAQPAR.pdf --preventiva PREVENTIVA.pdf --config config.json --desmob Controle_Frota_421.xlsx --saida ../index.html
 # opcional: --proxima PROGRAMACAO_MES_SEGUINTE.pdf  (tela "Próxima semana" na última semana do mês)
+# opcional: --abastecimento Abastecimento_AAAA-MM-DD.csv  (último horímetro/km por equipamento, coluna ÚLT. ABASTEC.)
 ```
 
 `--desmob` usa `openpyxl` (`pip install openpyxl`). Mostra os equipamentos com status "Programado" e data prevista entre hoje e 15 dias.
