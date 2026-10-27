@@ -148,7 +148,14 @@ function iniciar(DADOS){
     const ini = (w) => dt(w.dias[0][1]), fim = (w) => dt(w.dias[w.dias.length - 1][1]);
     let iAt = M.semanas.findIndex((w) => hoje >= ini(w) && hoje <= fim(w));
     if (iAt < 0) iAt = hoje < ini(M.semanas[0]) ? 0 : M.semanas.length - 1;
-    const atual = M.semanas[iAt], prox = M.semanas[Math.min(iAt + 1, M.semanas.length - 1)];
+    const atual = M.semanas[iAt];
+    let prox = M.semanas[Math.min(iAt + 1, M.semanas.length - 1)];
+    if (prox === atual && M.seguinte && M.seguinte.length) {
+      // última semana do mês: a próxima vem da programação do mês seguinte (ex.: 25-31/10 -> 01-07/11)
+      const dtS = (s) => { const p = s.split('/'), d = new Date(hoje.getFullYear(), Number(p[1]) - 1, Number(p[0])); if (d < dt(atual.dias[0][1])) d.setFullYear(d.getFullYear() + 1); return d; };
+      const seg = M.seguinte.find((w) => dtS(w.dias[w.dias.length - 1][1]) > fim(atual));
+      if (seg) prox = seg;
+    }
     const num = (h) => Number(String(h).replace(/\./g, '').replace(',', '.')) || 0;
     const valida = (it) => !/TRANSFERIDO/i.test(it[8]);
     const unicos = (lista) => { const vis = {}; return lista.filter((it) => { if (vis[it[0]]) return false; vis[it[0]] = 1; return true; }); };

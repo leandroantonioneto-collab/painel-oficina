@@ -121,6 +121,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--maqpar', required=True)
     ap.add_argument('--preventiva', required=True)
+    ap.add_argument('--proxima', help='PDF da programação do mês seguinte (opcional; usado na tela Próxima semana quando a semana atual é a última do mês)')
     ap.add_argument('--horimetro', help='PDF com a camada ULTIMO HORIMETRO (opcional)')
     ap.add_argument('--config', required=True)
     ap.add_argument('--saida', required=True)
@@ -150,6 +151,11 @@ def main():
                         print('horimetro semana', n, ':', sum(v is not None for v in h['valores']), 'leituras de', h['data'])
                     else:
                         print('AVISO horimetro semana', n, ': linhas nao batem', len(h['valores']), 'x', len(sem['itens']))
+
+    if a.proxima:
+        seg = extrai_prev.ler(a.proxima)['semanas']
+        prev['seguinte'] = [w for w in seg if w['itens']]
+        print('mês seguinte:', len(prev['seguinte']), 'semanas ·', sum(len(w['itens']) for w in prev['seguinte']), 'preventivas (' + os.path.basename(a.proxima) + ')')
 
     agora = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3)))
     dados = {
